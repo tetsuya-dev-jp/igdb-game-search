@@ -1,7 +1,7 @@
 {
   "name": "igdb-game-search",
   "version": "0.1.0",
-  "description": "This is a plugin to help you create game notes with IGDB.",
+  "description": "Plugin for creating game notes with IGDB.",
   "homepage": "https://github.com/tetsuya-dev-jp/igdb-game-search",
   "main": "main.js",
   "standard-version": {

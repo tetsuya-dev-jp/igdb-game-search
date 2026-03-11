@@ -3,7 +3,7 @@
 	"name": "IGDB Game Search",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Search IGDB and create game notes in Obsidian.",
+	"description": "Search IGDB and create game notes.",
 	"author": "tetsuya-dev-jp",
 	"authorUrl": "https://github.com/tetsuya-dev-jp",
 	"isDesktopOnly": false
