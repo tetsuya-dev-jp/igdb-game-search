@@ -231,3 +231,7 @@ updated: "{{DATE:YYYY-MM-DD HH:mm:ss}}"
 <%= JSON.stringify(game, null, 2) %>
 ```
 ````
+
+## Acknowledgements
+
+このプロジェクトは [anpigon/obsidian-book-search-plugin](https://github.com/anpigon/obsidian-book-search-plugin) をベースに、IGDB のゲームメタデータ向けに作り直したものです。

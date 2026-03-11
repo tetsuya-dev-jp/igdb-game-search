@@ -229,3 +229,7 @@ Example:
 <%= JSON.stringify(game, null, 2) %>
 ```
 ````
+
+## Acknowledgements
+
+This project started as a fork of [anpigon/obsidian-book-search-plugin](https://github.com/anpigon/obsidian-book-search-plugin) and was adapted for IGDB-based game metadata.
