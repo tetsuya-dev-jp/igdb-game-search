@@ -40,19 +40,19 @@ https://github.com/user-attachments/assets/e19ee2d0-1c84-4092-87d9-ee2f84b636d1
 
 ### 1. リボンアイコン、または `Create new game note` コマンドを実行します。
 
-<img width="753" height="194" src="https://github.com/user-attachments/assets/17cf8a9b-b618-4769-bde8-26fe5ac6f54e">
+<img width="700" src="https://github.com/user-attachments/assets/17cf8a9b-b618-4769-bde8-26fe5ac6f54e">
 
 ### 2. タイトルでゲームを検索します。
 
-<img width="613" height="232" src="https://github.com/user-attachments/assets/2389fa36-3761-4441-a6ef-b61030196441" />
+<img width="700" src="https://github.com/user-attachments/assets/2389fa36-3761-4441-a6ef-b61030196441" />
 
 ### 3. 検索結果からゲームを選択します。
 
-<img width="754" height="1036" src="https://github.com/user-attachments/assets/96ecd455-6e51-4ece-a700-aeb40b215b92" />
+<img width="700" src="https://github.com/user-attachments/assets/96ecd455-6e51-4ece-a700-aeb40b215b92" />
 
 ### 4. 選択したメタデータをもとにノートが作成されます。
 
-<img width="685" height="578" src="https://github.com/user-attachments/assets/3925b5b3-dd7a-4f36-b241-a8641b1a2752" />
+<img width="700" src="https://github.com/user-attachments/assets/3925b5b3-dd7a-4f36-b241-a8641b1a2752" />
 
 <br>
 
@@ -77,7 +77,7 @@ IGDB API は、Twitch Developer Service Agreement の条件のもとで、非商
 
 ## 設定項目
 
-<img width="806" height="580" src="https://github.com/user-attachments/assets/58c30330-45fa-4398-b643-2caecdd57337" />
+<img width="700" src="https://github.com/user-attachments/assets/58c30330-45fa-4398-b643-2caecdd57337" />
 
 ### Twitch Client ID / Client Secret
 
