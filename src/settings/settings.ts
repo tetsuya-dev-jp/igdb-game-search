@@ -82,19 +82,19 @@ export class GameSearchSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('New file location')
       .setDesc('New game notes will be placed here.')
-      .addSearch(cb => {
+      .addText(text => {
+        const saveValue = async (value: string) => {
+          this.plugin.settings.folder = value.trim();
+          await this.plugin.saveSettings();
+        };
+
         try {
-          new FolderSuggest(this.app, cb.inputEl);
+          new FolderSuggest(this.app, text.inputEl, saveValue);
         } catch (error) {
           console.error(error);
         }
 
-        cb.setPlaceholder('Example: games')
-          .setValue(this.plugin.settings.folder)
-          .onChange(async value => {
-            this.plugin.settings.folder = value.trim();
-            await this.plugin.saveSettings();
-          });
+        text.setPlaceholder('Example: games').setValue(this.plugin.settings.folder).onChange(saveValue);
       });
   }
 
@@ -141,19 +141,22 @@ export class GameSearchSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Template file')
       .setDesc(templateFileDesc)
-      .addSearch(cb => {
+      .addText(text => {
+        const saveValue = async (value: string) => {
+          this.plugin.settings.templateFile = value.trim();
+          await this.plugin.saveSettings();
+        };
+
         try {
-          new FileSuggest(this.app, cb.inputEl);
+          new FileSuggest(this.app, text.inputEl, saveValue);
         } catch (error) {
           console.error(error);
         }
 
-        cb.setPlaceholder('Example: templates/game-note')
+        text
+          .setPlaceholder('Example: templates/game-note')
           .setValue(this.plugin.settings.templateFile)
-          .onChange(async value => {
-            this.plugin.settings.templateFile = value.trim();
-            await this.plugin.saveSettings();
-          });
+          .onChange(saveValue);
       });
   }
 
@@ -226,19 +229,22 @@ export class GameSearchSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Cover image folder')
       .setDesc('Folder used when cover image saving is enabled.')
-      .addSearch(cb => {
+      .addText(text => {
+        const saveValue = async (value: string) => {
+          this.plugin.settings.coverImagePath = value.trim();
+          await this.plugin.saveSettings();
+        };
+
         try {
-          new FolderSuggest(this.app, cb.inputEl);
+          new FolderSuggest(this.app, text.inputEl, saveValue);
         } catch (error) {
           console.error(error);
         }
 
-        cb.setPlaceholder('Example: assets/game-covers')
+        text
+          .setPlaceholder('Example: assets/game-covers')
           .setValue(this.plugin.settings.coverImagePath)
-          .onChange(async value => {
-            this.plugin.settings.coverImagePath = value.trim();
-            await this.plugin.saveSettings();
-          });
+          .onChange(saveValue);
       });
   }
 }
