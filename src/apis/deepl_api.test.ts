@@ -32,6 +32,8 @@ describe('DeepLApi', () => {
     showCoverImageInSearch: false,
     enableCoverImageSave: false,
     coverImagePath: '',
+    enableScreenshotSave: false,
+    screenshotImagePath: '',
     enableTranslation: true,
     translationTargetLanguage: 'JA',
     deeplApiKey: 'test-key',

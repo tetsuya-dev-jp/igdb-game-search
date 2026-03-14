@@ -131,6 +131,16 @@ Use `{{localCoverImage}}` in your template if you want to embed the saved image.
 
 Set the folder where downloaded cover images are stored.
 
+### Screenshot saving
+
+Download IGDB screenshots into your vault.
+
+Screenshots are stored under the configured root folder, with one subfolder per game.
+
+### Screenshot folder
+
+Set the root folder where downloaded screenshots are stored.
+
 <br>
 
 ## Example template
@@ -217,6 +227,8 @@ Write `{{name}}` in your template and replace `name` with the desired field.
 | `coverLargeUrl`         | Large cover image URL                                        |
 | `screenshot`            | Comma-separated screenshot URLs                              |
 | `screenshots`           | Screenshot URL array                                         |
+| `localScreenshot`       | Comma-separated local screenshot paths                       |
+| `localScreenshots`      | Local screenshot path array                                  |
 | `localCoverImage`       | Local path of the downloaded cover image                     |
 
 <br>

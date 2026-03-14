@@ -41,5 +41,7 @@ export interface GameEntry {
   coverLargeUrl?: string;
   screenshot?: string;
   screenshots?: string[];
+  localScreenshot?: string;
+  localScreenshots?: string[];
   localCoverImage?: string;
 }

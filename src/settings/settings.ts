@@ -29,6 +29,8 @@ export interface GameSearchPluginSettings {
   showCoverImageInSearch: boolean;
   enableCoverImageSave: boolean;
   coverImagePath: string;
+  enableScreenshotSave: boolean;
+  screenshotImagePath: string;
   enableTranslation: boolean;
   translationTargetLanguage: string;
   deeplApiKey: string;
@@ -50,6 +52,8 @@ export const DEFAULT_SETTINGS: GameSearchPluginSettings = {
   showCoverImageInSearch: false,
   enableCoverImageSave: false,
   coverImagePath: '',
+  enableScreenshotSave: false,
+  screenshotImagePath: '',
   enableTranslation: false,
   translationTargetLanguage: AUTO_TRANSLATION_LANGUAGE,
   deeplApiKey: '',
@@ -299,6 +303,39 @@ export class GameSearchSettingTab extends PluginSettingTab {
         text
           .setPlaceholder('Example: assets/game-covers')
           .setValue(this.plugin.settings.coverImagePath)
+          .onChange(saveValue);
+      });
+
+    new Setting(containerEl)
+      .setName('Enable screenshot save')
+      .setDesc('Download IGDB screenshots into your vault.')
+      .addToggle(toggle =>
+        toggle.setValue(this.plugin.settings.enableScreenshotSave).onChange(async value => {
+          this.plugin.settings.enableScreenshotSave = value;
+          await this.plugin.saveSettings();
+          this.display();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName('Screenshot folder')
+      .setDesc('Root folder used when screenshot saving is enabled. Each game gets its own subfolder.')
+      .addText(text => {
+        const saveValue = async (value: string) => {
+          this.plugin.settings.screenshotImagePath = value.trim();
+          await this.plugin.saveSettings();
+        };
+
+        try {
+          new FolderSuggest(this.app, text.inputEl, saveValue);
+        } catch (error) {
+          console.error(error);
+        }
+
+        text
+          .setPlaceholder('Example: assets/game-screenshots')
+          .setValue(this.plugin.settings.screenshotImagePath)
+          .setDisabled(!this.plugin.settings.enableScreenshotSave)
           .onChange(saveValue);
       });
   }

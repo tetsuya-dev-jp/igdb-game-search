@@ -47,4 +47,13 @@ describe('utils', () => {
       'Like a Dragon Infinite Wealth - Square Enix.md',
     );
   });
+
+  it('makeFileStem matches the generated file name without extension', () => {
+    expect(utils.makeFileStem(game, '{{developer}}-{{title}}')).toBe('Square Enix-Final Fantasy VII Rebirth');
+  });
+
+  it('makeScreenshotFileName creates zero-padded screenshot names', () => {
+    expect(utils.makeScreenshotFileName(0)).toBe('screenshot-01.jpg');
+    expect(utils.makeScreenshotFileName(11)).toBe('screenshot-12.jpg');
+  });
 });

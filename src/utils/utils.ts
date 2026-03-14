@@ -14,8 +14,16 @@ export function isISBN(str: string) {
 }
 
 export function makeFileName(game: GameEntry, fileNameFormat?: string, extension = 'md') {
+  return `${makeFileStem(game, fileNameFormat)}.${extension}`;
+}
+
+export function makeFileStem(game: GameEntry, fileNameFormat?: string) {
   const result = fileNameFormat ? replaceVariableSyntax(game, replaceDateInString(fileNameFormat)) : game.title;
-  return replaceIllegalFileNameCharactersInString(result) + `.${extension}`;
+  return replaceIllegalFileNameCharactersInString(result);
+}
+
+export function makeScreenshotFileName(index: number, extension = 'jpg') {
+  return `screenshot-${String(index + 1).padStart(2, '0')}.${extension}`;
 }
 
 export function changeSnakeCase(game: GameEntry) {

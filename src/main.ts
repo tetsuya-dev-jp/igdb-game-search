@@ -6,7 +6,14 @@ import { GameEntry } from '@models/game.model';
 import { DEFAULT_SETTINGS, GameSearchPluginSettings, GameSearchSettingTab } from '@settings/settings';
 import { DeepLApi } from '@apis/deepl_api';
 import { applyTemplateTransformations, getTemplateContents, useTemplaterPluginInFile } from '@utils/template';
-import { applyDefaultFrontMatter, makeFileName, replaceVariableSyntax, toStringFrontMatter } from '@utils/utils';
+import {
+  applyDefaultFrontMatter,
+  makeFileName,
+  makeFileStem,
+  makeScreenshotFileName,
+  replaceVariableSyntax,
+  toStringFrontMatter,
+} from '@utils/utils';
 
 export default class GameSearchPlugin extends Plugin {
   settings: GameSearchPluginSettings;
@@ -99,6 +106,8 @@ export default class GameSearchPlugin extends Plugin {
       defaultFrontmatterKeyType,
       enableCoverImageSave,
       coverImagePath,
+      enableScreenshotSave,
+      screenshotImagePath,
       frontmatter,
       content,
     } = this.settings;
@@ -111,6 +120,13 @@ export default class GameSearchPlugin extends Plugin {
         const imageName = makeFileName(localizedGame, this.settings.fileNameFormat, 'jpg');
         localizedGame.localCoverImage = await this.downloadAndSaveImage(imageName, coverImagePath, coverImageUrl);
       }
+    }
+
+    if (enableScreenshotSave) {
+      const screenshotDirectory = this.getScreenshotDirectory(localizedGame, screenshotImagePath);
+      const localScreenshots = await this.downloadAndSaveImages(localizedGame.screenshots ?? [], screenshotDirectory);
+      localizedGame.localScreenshots = localScreenshots;
+      localizedGame.localScreenshot = localScreenshots.join(', ');
     }
 
     if (templateFile) {
@@ -143,10 +159,6 @@ export default class GameSearchPlugin extends Plugin {
   }
 
   async downloadAndSaveImage(imageName: string, directory: string, imageUrl: string): Promise<string> {
-    if (!this.settings.enableCoverImageSave) {
-      return '';
-    }
-
     try {
       const response = await requestUrl({
         url: imageUrl,
@@ -162,12 +174,49 @@ export default class GameSearchPlugin extends Plugin {
 
       const imageData = response.arrayBuffer;
       const normalizedDirectory = normalizePath(directory);
+      await this.ensureDirectory(normalizedDirectory);
       const filePath = normalizedDirectory ? `${normalizedDirectory}/${imageName}` : imageName;
       await this.app.vault.adapter.writeBinary(filePath, imageData);
       return filePath;
     } catch (error) {
       console.error('Error downloading or saving image:', error);
       return '';
+    }
+  }
+
+  private async downloadAndSaveImages(imageUrls: string[], directory: string): Promise<string[]> {
+    const localPaths: string[] = [];
+
+    for (const [index, imageUrl] of imageUrls.entries()) {
+      const fileName = makeScreenshotFileName(index);
+      const localPath = await this.downloadAndSaveImage(fileName, directory, imageUrl);
+      if (localPath) {
+        localPaths.push(localPath);
+      }
+    }
+
+    return localPaths;
+  }
+
+  private getScreenshotDirectory(game: GameEntry, rootDirectory: string): string {
+    const gameFolderName = makeFileStem(game, this.settings.fileNameFormat);
+    const normalizedRootDirectory = normalizePath(rootDirectory);
+    return normalizedRootDirectory ? `${normalizedRootDirectory}/${gameFolderName}` : gameFolderName;
+  }
+
+  private async ensureDirectory(directory: string): Promise<void> {
+    if (!directory) {
+      return;
+    }
+
+    const parts = normalizePath(directory).split('/').filter(Boolean);
+    let currentPath = '';
+
+    for (const part of parts) {
+      currentPath = currentPath ? `${currentPath}/${part}` : part;
+      if (!(await this.app.vault.adapter.exists(currentPath))) {
+        await this.app.vault.adapter.mkdir(currentPath);
+      }
     }
   }
 
