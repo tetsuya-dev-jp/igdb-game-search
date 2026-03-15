@@ -220,7 +220,7 @@ export class GameSearchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Enable translation')
-      .setDesc('Translate summary and storyline with DeepL before rendering note content.')
+      .setDesc('Translate the summary and storyline before rendering note content.')
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.enableTranslation).onChange(async value => {
           this.plugin.settings.enableTranslation = value;
@@ -247,12 +247,12 @@ export class GameSearchSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('DeepL API key')
-      .setDesc('Stored locally in plugin data and used only for translating summary and storyline.')
+      .setName('Translation service key')
+      .setDesc('Stored locally in plugin data and used only for translating the summary and storyline.')
       .addText(text => {
         text.inputEl.type = 'password';
         text
-          .setPlaceholder('DeepL API key')
+          .setPlaceholder('Translation service key')
           .setValue(this.plugin.settings.deeplApiKey)
           .setDisabled(!this.plugin.settings.enableTranslation)
           .onChange(async value => {
@@ -308,7 +308,7 @@ export class GameSearchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Enable screenshot save')
-      .setDesc('Download IGDB screenshots into your vault.')
+      .setDesc('Download screenshots into your vault.')
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.enableScreenshotSave).onChange(async value => {
           this.plugin.settings.enableScreenshotSave = value;
