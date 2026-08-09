@@ -145,6 +145,18 @@ IGDB 스크린샷을 vault 안에 저장합니다.
 
 다운로드한 스크린샷을 저장할 루트 폴더를 설정합니다.
 
+### Note content
+
+템플릿 파일이 없을 때 노트 본문과 frontmatter 를 생성하는 방법을 설정합니다.
+
+**Use default frontmatter** 를 켜면 게임 메타데이터(제목, 플랫폼, 평점 등)가 frontmatter 에 포함됩니다.
+
+**Frontmatter key style** 로 기본 frontmatter 키를 `Camel Case` 또는 `Snake Case` 로 전환합니다.
+
+**Extra frontmatter** 에는 frontmatter 에 추가할 YAML 키를 줄마다 `key: value` 형식으로 입력합니다.
+
+**Note content** 는 템플릿 파일이 없을 때 사용하는 본문 템플릿입니다. `{{variable}}` 문법을 지원합니다. 템플릿 파일이 설정되어 있으면 무시됩니다.
+
 <br>
 
 ## 템플릿 예시

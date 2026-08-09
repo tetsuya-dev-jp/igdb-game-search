@@ -78,6 +78,7 @@ export class GameSearchSettingTab extends PluginSettingTab {
     this.createTranslationSettings(containerEl);
     this.createSearchSettings(containerEl);
     this.createNoteSettings(containerEl);
+    this.createNoteContentSettings(containerEl);
   }
 
   private createGeneralSettings(containerEl: HTMLElement) {
@@ -338,5 +339,63 @@ export class GameSearchSettingTab extends PluginSettingTab {
           .setDisabled(!this.plugin.settings.enableScreenshotSave)
           .onChange(saveValue);
       });
+  }
+
+  private createNoteContentSettings(containerEl: HTMLElement) {
+    this.createHeader('Note content', containerEl);
+
+    new Setting(containerEl)
+      .setName('Use default frontmatter')
+      .setDesc('Include game metadata (title, platforms, ratings...) as frontmatter.')
+      .addToggle(toggle =>
+        toggle.setValue(this.plugin.settings.useDefaultFrontmatter).onChange(async value => {
+          this.plugin.settings.useDefaultFrontmatter = value;
+          await this.plugin.saveSettings();
+          this.display();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName('Frontmatter key style')
+      .setDesc('Choose the key style used for the default game metadata frontmatter.')
+      .addDropdown(dropdown => {
+        Object.values(DefaultFrontmatterKeyType).forEach(value => {
+          dropdown.addOption(value, value);
+        });
+
+        dropdown
+          .setValue(this.plugin.settings.defaultFrontmatterKeyType)
+          .setDisabled(!this.plugin.settings.useDefaultFrontmatter)
+          .onChange(async value => {
+            this.plugin.settings.defaultFrontmatterKeyType = value as DefaultFrontmatterKeyType;
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName('Extra frontmatter')
+      .setDesc('Additional YAML keys merged into the frontmatter. One `key: value` per line.')
+      .addTextArea(text =>
+        text
+          .setPlaceholder('Example: play_status: backlog')
+          .setValue(this.plugin.settings.frontmatter)
+          .onChange(async value => {
+            this.plugin.settings.frontmatter = value;
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName('Note content')
+      .setDesc('Body template used when no template file is set. Supports `{{variable}}` syntax.')
+      .addTextArea(text =>
+        text
+          .setPlaceholder('Example: ## {{title}}\n{{summary}}')
+          .setValue(this.plugin.settings.content)
+          .onChange(async value => {
+            this.plugin.settings.content = value;
+            await this.plugin.saveSettings();
+          }),
+      );
   }
 }

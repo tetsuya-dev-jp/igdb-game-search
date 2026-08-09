@@ -145,6 +145,18 @@ Screenshots are stored under the configured root folder, with one subfolder per 
 
 Set the root folder where downloaded screenshots are stored.
 
+### Note content
+
+Configure how the note body and frontmatter are generated when no template file is set.
+
+Use the **Use default frontmatter** toggle to include game metadata (title, platforms, ratings...) as frontmatter.
+
+**Frontmatter key style** switches the default frontmatter keys between `Camel Case` and `Snake Case`.
+
+**Extra frontmatter** adds custom YAML keys to the frontmatter, one `key: value` per line.
+
+**Note content** is the body template used when no template file is set, supporting `{{variable}}` syntax. It is ignored when a template file is set.
+
 <br>
 
 ## Example template

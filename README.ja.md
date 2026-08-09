@@ -147,6 +147,18 @@ IGDB のスクリーンショットを vault 内へ保存します。
 
 ダウンロードしたスクリーンショットの保存先ルートフォルダを設定します。
 
+### Note content
+
+テンプレートファイル未設定時のノート本文と frontmatter の生成方法を設定します。
+
+**Use default frontmatter** をオンにすると、ゲームメタデータ（タイトル、プラットフォーム、評価など）が frontmatter に含まれます。
+
+**Frontmatter key style** で、既定の frontmatter キーを `Camel Case` か `Snake Case` に切り替えられます。
+
+**Extra frontmatter** には、frontmatter に追加する YAML キーを 1 行につき `key: value` の形式で記述します。
+
+**Note content** は、テンプレートファイル未設定時に使う本文テンプレートです。`{{variable}}` 構文が使えます。テンプレートファイルを設定している場合は無視されます。
+
 <br>
 
 ## テンプレート例
