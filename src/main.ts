@@ -180,6 +180,17 @@ export default class GameSearchPlugin extends Plugin {
       await this.ensureDirectory(normalizedDirectory);
       const filePath = await this.resolveUniquePath(normalizedDirectory, imageName);
       await this.app.vault.adapter.writeBinary(filePath, imageData);
+
+      // Race guard: a concurrent save may have claimed this path between our
+      // exists() check and writeBinary. Verify our bytes are the ones on disk;
+      // if another writer clobbered us, re-resolve and write again.
+      const onDisk = await this.app.vault.adapter.readBinary(filePath).catch(() => null);
+      const expected = new Uint8Array(imageData);
+      if (!onDisk || onDisk.byteLength !== expected.byteLength) {
+        const retryPath = await this.resolveUniquePath(normalizedDirectory, filePath.split('/').pop() ?? imageName);
+        await this.app.vault.adapter.writeBinary(retryPath, imageData);
+        return retryPath;
+      }
       return filePath;
     } catch (error) {
       console.error('Error downloading or saving image:', error);

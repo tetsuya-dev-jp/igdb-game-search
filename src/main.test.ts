@@ -108,6 +108,7 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
           exists: jest.fn().mockResolvedValue(false),
           mkdir: jest.fn().mockResolvedValue(undefined),
           writeBinary: jest.fn().mockResolvedValue(undefined),
+          readBinary: jest.fn().mockResolvedValue(new ArrayBuffer(8)),
         },
       },
       metadataCache: {},
@@ -178,5 +179,33 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
 
     expect(result).toBe('');
     expect(plugin.app.vault.adapter.writeBinary).not.toHaveBeenCalled();
+  });
+
+  it('re-resolves and rewrites when another save clobbers the path mid-write', async () => {
+    const adapter = plugin.app.vault.adapter;
+    let coverExistsCalls = 0;
+    // ensureDirectory also probes exists() for each path segment; count only
+    // probes of the candidate itself. Initial resolve sees cover.jpg free; by
+    // the re-check it is claimed.
+    adapter.exists.mockImplementation(async (p: string) => {
+      if (p.endsWith('cover.jpg')) {
+        coverExistsCalls += 1;
+        return coverExistsCalls > 1;
+      }
+      return false;
+    });
+    // Bytes on disk are not ours (different length than the 8-byte write).
+    adapter.readBinary.mockResolvedValue(new ArrayBuffer(4));
+
+    const result = await plugin.downloadAndSaveImage(
+      'cover.jpg',
+      'assets/covers',
+      'https://images.igdb.com/x/cover.jpg',
+    );
+
+    expect(result).toBe('assets/covers/cover-2.jpg');
+    expect(adapter.writeBinary).toHaveBeenCalledTimes(2);
+    expect(adapter.writeBinary).toHaveBeenNthCalledWith(1, 'assets/covers/cover.jpg', expect.any(ArrayBuffer));
+    expect(adapter.writeBinary).toHaveBeenNthCalledWith(2, 'assets/covers/cover-2.jpg', expect.any(ArrayBuffer));
   });
 });
