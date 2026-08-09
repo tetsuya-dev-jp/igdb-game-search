@@ -52,6 +52,10 @@ Currently, install it manually:
 
 <img width="700" src="https://github.com/user-attachments/assets/3925b5b3-dd7a-4f36-b241-a8641b1a2752" />
 
+### 5. Insert metadata into an existing note
+
+Open a note, then run the `Insert metadata` command from the command palette (Ctrl/Cmd+P). The rendered metadata block (frontmatter + content, following your template or default settings) is inserted at the top of the current note. No new file is created.
+
 <br>
 
 ## How to get Twitch Client ID and Client Secret
@@ -240,6 +244,15 @@ Write `{{name}}` in your template and replace `name` with the desired field.
 - This plugin replaces `{{variables}}` and date placeholders, but it no longer executes custom `<%= ... %>` expressions.
 - Use the Templater plugin for loops, conditions, or any other scripting inside templates.
 - If you want to render screenshots or add conditional sections, use Templater on top of the generated metadata.
+
+## Development
+
+- **Requirements**: Node >= 20, pnpm >= 9 (see `.nvmrc`).
+- **Install**: `pnpm install`
+- **Dev watch**: `pnpm dev` — builds `main.js` on change; copy `main.js`, `manifest.json`, `styles.css` to `VaultFolder/.obsidian/plugins/igdb-game-search/`.
+- **Verify**: `pnpm lint` (prettier + eslint + typecheck) and `pnpm test` (jest)
+- **Build**: `pnpm build`
+- **Release**: `pnpm release` (standard-version) — pushes a versioned tag; the GitHub Actions workflow builds and attaches the release assets.
 
 ## Acknowledgements
 

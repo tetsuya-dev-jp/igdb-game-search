@@ -54,6 +54,10 @@ https://github.com/user-attachments/assets/e19ee2d0-1c84-4092-87d9-ee2f84b636d1
 
 <img width="700" src="https://github.com/user-attachments/assets/3925b5b3-dd7a-4f36-b241-a8641b1a2752" />
 
+### 5. 既存のノートにメタデータを挿入します
+
+ノートを開き、コマンドパレット（Ctrl/Cmd+P）から `Insert metadata` コマンドを実行します。テンプレートまたはデフォルト設定に従ってレンダリングされたメタデータブロック（frontmatter と本文）が、現在のノートの先頭に挿入されます。新しいファイルは作成されません。
+
 <br>
 
 ## Twitch Client ID / Client Secret の取得方法
@@ -242,6 +246,15 @@ updated: '{{DATE:YYYY-MM-DD HH:mm:ss}}'
 - このプラグインは `{{variables}}` と日付プレースホルダーは置換しますが、`<%= ... %>` のような独自式は実行しません。
 - ループや条件分岐などのテンプレート処理をしたい場合は Templater を使ってください。
 - スクリーンショットの埋め込みや条件付き表示をしたい場合は、生成されたメタデータに Templater を重ねて使ってください。
+
+## 開発
+
+- **必要環境**: Node >= 20、pnpm >= 9（`.nvmrc` を参照）。
+- **インストール**: `pnpm install`
+- **開発用ウォッチ**: `pnpm dev` — 変更があると `main.js` をビルドします。`main.js`、`manifest.json`、`styles.css` を `VaultFolder/.obsidian/plugins/igdb-game-search/` にコピーしてください。
+- **検証**: `pnpm lint`（prettier + eslint + typecheck）と `pnpm test`（jest）
+- **ビルド**: `pnpm build`
+- **リリース**: `pnpm release`（standard-version）— バージョンタグをプッシュします。GitHub Actions のワークフローがリリースアセットをビルドして添付します。
 
 ## Acknowledgements
 
