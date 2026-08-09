@@ -92,6 +92,14 @@ describe('GameSearchModal', () => {
 });
 
 describe('GameSuggestModal', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('choosing a suggestion delivers the game, exactly once', () => {
     const onChoose = jest.fn();
     const modal = makeSuggestModal(onChoose);
@@ -99,6 +107,7 @@ describe('GameSuggestModal', () => {
 
     modal.onChooseSuggestion(game);
     modal.onClose(); // close after delivery is a no-op
+    jest.advanceTimersByTime(0);
 
     expect(onChoose).toHaveBeenCalledTimes(1);
     expect(onChoose).toHaveBeenCalledWith(null, game);
@@ -110,8 +119,25 @@ describe('GameSuggestModal', () => {
 
     modal.onClose();
     modal.onClose(); // double close must not double-callback
+    jest.advanceTimersByTime(0);
 
     expect(onChoose).toHaveBeenCalledTimes(1);
     expect(onChoose).toHaveBeenCalledWith(null, undefined);
+  });
+
+  it('a selection wins over the close-triggered cancel (Obsidian closes before onChooseSuggestion)', () => {
+    const onChoose = jest.fn();
+    const modal = makeSuggestModal(onChoose);
+    const game: GameEntry = { title: 'Elden Ring' };
+
+    // Real Obsidian order (verified against obsidian.asar): selectSuggestion
+    // calls close() first, then onChooseSuggestion() synchronously. The
+    // deferred cancel must lose to the selection.
+    modal.onClose();
+    modal.onChooseSuggestion(game);
+    jest.advanceTimersByTime(0);
+
+    expect(onChoose).toHaveBeenCalledTimes(1);
+    expect(onChoose).toHaveBeenCalledWith(null, game);
   });
 });

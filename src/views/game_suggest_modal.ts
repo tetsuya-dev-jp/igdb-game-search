@@ -56,9 +56,19 @@ export class GameSuggestModal extends SuggestModal<GameEntry> {
   }
 
   onClose(): void {
-    if (!this.delivered) {
-      this.delivered = true;
-      this.onChoose(null, undefined);
-    }
+    // Obsidian's SuggestModal.selectSuggestion calls close() BEFORE
+    // onChooseSuggestion() (verified against obsidian.asar). If we delivered
+    // the cancel synchronously here, every selection would be swallowed as a
+    // cancel (the close-triggered cancel wins the promise). Defer the cancel
+    // by one tick: a real selection sets delivered synchronously right after
+    // close(), so the deferred cancel sees it and no-ops; a genuine dismiss
+    // (Esc / click-away) has no pending selection and delivers undefined.
+    if (this.delivered) return;
+    setTimeout(() => {
+      if (!this.delivered) {
+        this.delivered = true;
+        this.onChoose(null, undefined);
+      }
+    }, 0);
   }
 }
