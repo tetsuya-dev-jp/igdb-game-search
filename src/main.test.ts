@@ -160,6 +160,20 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
     expect(result).toBe('assets/covers/cover-3.jpg');
   });
 
+  it('writes to a clean path with no leading slash when directory is empty', async () => {
+    const result = await plugin.downloadAndSaveImage('cover.jpg', '', 'https://images.igdb.com/x/cover.jpg');
+
+    expect(result).toBe('cover.jpg');
+    expect(result.startsWith('/')).toBe(false);
+    expect(plugin.app.vault.adapter.writeBinary).toHaveBeenCalledWith('cover.jpg', expect.any(ArrayBuffer));
+
+    // round-trip: the path embedded in frontmatter is exactly the path the file was written to,
+    // so vault.getAbstractFileByPath resolves it to the written file
+    const writtenPath = plugin.app.vault.adapter.writeBinary.mock.calls[0][0];
+    plugin.app.vault.getAbstractFileByPath = jest.fn((p: string) => (p === writtenPath ? { path: p } : null));
+    expect(plugin.app.vault.getAbstractFileByPath(result)).toEqual({ path: 'cover.jpg' });
+  });
+
   it('resolves names without an extension', async () => {
     plugin.app.vault.adapter.exists.mockImplementation(async (p: string) => p.endsWith('cover'));
 
@@ -207,5 +221,23 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
     expect(adapter.writeBinary).toHaveBeenCalledTimes(2);
     expect(adapter.writeBinary).toHaveBeenNthCalledWith(1, 'assets/covers/cover.jpg', expect.any(ArrayBuffer));
     expect(adapter.writeBinary).toHaveBeenNthCalledWith(2, 'assets/covers/cover-2.jpg', expect.any(ArrayBuffer));
+  });
+});
+
+describe('GameSearchPlugin.getScreenshotDirectory', () => {
+  let plugin: any;
+
+  beforeEach(() => {
+    plugin = Object.create(GameSearchPlugin.prototype);
+    plugin.settings = createSettings();
+    plugin.app = { vault: {}, metadataCache: {} };
+  });
+
+  it('returns the game folder with no leading slash when the root directory is empty', () => {
+    expect(plugin.getScreenshotDirectory({ title: 'Elden Ring' }, '')).toBe('Elden Ring');
+  });
+
+  it('prefixes the game folder with the root directory when set', () => {
+    expect(plugin.getScreenshotDirectory({ title: 'Elden Ring' }, 'assets')).toBe('assets/Elden Ring');
   });
 });

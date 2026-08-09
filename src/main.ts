@@ -186,7 +186,7 @@ export default class GameSearchPlugin extends Plugin {
       }
 
       const imageData = response.arrayBuffer;
-      const normalizedDirectory = normalizePath(directory);
+      const normalizedDirectory = this.normalizeDirectory(directory);
       await this.ensureDirectory(normalizedDirectory);
       const filePath = await this.resolveUniquePath(normalizedDirectory, imageName);
       await this.app.vault.adapter.writeBinary(filePath, imageData);
@@ -206,6 +206,11 @@ export default class GameSearchPlugin extends Plugin {
       console.error('Error downloading or saving image:', error);
       return '';
     }
+  }
+
+  private normalizeDirectory(directory: string): string {
+    const normalized = normalizePath(directory);
+    return normalized === '/' ? '' : normalized;
   }
 
   private async resolveUniquePath(directory: string, fileName: string): Promise<string> {
@@ -240,7 +245,7 @@ export default class GameSearchPlugin extends Plugin {
 
   private getScreenshotDirectory(game: GameEntry, rootDirectory: string): string {
     const gameFolderName = makeFileStem(game, this.settings.fileNameFormat);
-    const normalizedRootDirectory = normalizePath(rootDirectory);
+    const normalizedRootDirectory = this.normalizeDirectory(rootDirectory);
     return normalizedRootDirectory ? `${normalizedRootDirectory}/${gameFolderName}` : gameFolderName;
   }
 
