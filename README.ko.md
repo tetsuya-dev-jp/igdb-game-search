@@ -230,6 +230,8 @@ updated: '{{DATE:YYYY-MM-DD HH:mm:ss}}'
 | `publishers`            | 퍼블리셔 이름 배열                                  |
 | `franchise`             | 첫 번째 프랜차이즈 이름                             |
 | `collection`            | 첫 번째 컬렉션 이름                                 |
+| `similarGame`           | 유사 게임 이름, 쉼표로 구분                         |
+| `similarGames`          | 유사 게임 이름 배열                                  |
 | `firstReleaseDate`      | `YYYY-MM-DD` 형식의 출시일                          |
 | `releaseYear`           | 출시 연도                                           |
 | `rating`                | IGDB rating                                         |

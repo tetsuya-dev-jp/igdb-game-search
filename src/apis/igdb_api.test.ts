@@ -43,6 +43,10 @@ describe('IgdbApi', () => {
       ],
       franchises: [{ name: 'The Legend of Zelda' }],
       collections: [{ name: 'Nintendo Switch Collection' }],
+      similar_games: [
+        { id: 1, name: 'Dark Souls' },
+        { id: 2, name: 'Bloodborne' },
+      ],
       rating: 96.44,
       rating_count: 500,
       aggregated_rating: 97.1,
@@ -65,6 +69,8 @@ describe('IgdbApi', () => {
     expect(mapped.screenshots).toHaveLength(2);
     expect(mapped.website).toBe('https://zelda.com/breath-of-the-wild/');
     expect(mapped.totalRating).toBe(96.7);
+    expect(mapped.similarGames).toEqual(['Dark Souls', 'Bloodborne']);
+    expect(mapped.similarGame).toBe('Dark Souls, Bloodborne');
   });
 
   it('builds an escaped IGDB search body', () => {

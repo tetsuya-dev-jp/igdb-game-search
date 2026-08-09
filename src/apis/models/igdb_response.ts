@@ -39,6 +39,7 @@ export interface IgdbGame {
   player_perspectives?: IgdbNamedEntity[];
   franchises?: IgdbNamedEntity[];
   collections?: IgdbNamedEntity[];
+  similar_games?: Array<{ id: number; name: string }>;
   involved_companies?: IgdbInvolvedCompany[];
   rating?: number;
   rating_count?: number;

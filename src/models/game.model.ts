@@ -28,6 +28,8 @@ export interface GameEntry {
   publishers?: string[];
   franchise?: string;
   collection?: string;
+  similarGame?: string;
+  similarGames?: string[];
   firstReleaseDate?: string;
   releaseYear?: string;
   rating?: number | string;

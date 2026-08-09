@@ -189,6 +189,11 @@ describe('replaceVariableSyntax', () => {
     expect(utils.replaceVariableSyntax({ title: 'X', summary: '' }, '{{summary}}|{{title}}')).toBe('|X');
   });
 
+  it('substitutes array variables like {{similarGames}}', () => {
+    const similarGame: GameEntry = { title: 'X', similarGames: ['Dark Souls', 'Bloodborne'] };
+    expect(utils.replaceVariableSyntax(similarGame, 'Liked: {{similarGames}}')).toBe('Liked: Dark Souls,Bloodborne');
+  });
+
   it('returns an empty string for empty or whitespace-only text', () => {
     expect(utils.replaceVariableSyntax({ title: 'X' }, '   ')).toBe('');
   });

@@ -230,6 +230,8 @@ Write `{{name}}` in your template and replace `name` with the desired field.
 | `publishers`            | Publisher array                                              |
 | `franchise`             | First franchise name                                         |
 | `collection`            | First collection name                                        |
+| `similarGame`           | Comma-separated similar game names                          |
+| `similarGames`          | Similar game array                                           |
 | `firstReleaseDate`      | Release date in `YYYY-MM-DD`                                 |
 | `releaseYear`           | Release year                                                 |
 | `rating`                | IGDB rating                                                  |

@@ -232,6 +232,8 @@ updated: '{{DATE:YYYY-MM-DD HH:mm:ss}}'
 | `publishers`            | 販売会社名の配列                                     |
 | `franchise`             | 最初のフランチャイズ名                               |
 | `collection`            | 最初のコレクション名                                 |
+| `similarGame`           | 類似ゲーム名のカンマ区切り                           |
+| `similarGames`          | 類似ゲーム名の配列                                   |
 | `firstReleaseDate`      | `YYYY-MM-DD` 形式の発売日                            |
 | `releaseYear`           | 発売年                                               |
 | `rating`                | IGDB の rating                                       |

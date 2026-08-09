@@ -78,6 +78,7 @@ export class IgdbApi implements GameMetadataApi {
         'player_perspectives.name',
         'franchises.name',
         'collections.name',
+        'similar_games.name',
         'involved_companies.company.name',
         'involved_companies.developer',
         'involved_companies.publisher',
@@ -104,6 +105,7 @@ export class IgdbApi implements GameMetadataApi {
     const themes = this.toNames(game.themes);
     const gameModes = this.toNames(game.game_modes);
     const playerPerspectives = this.toNames(game.player_perspectives);
+    const similarGames = this.toNames(game.similar_games);
     const alternativeTitles = this.toNames(game.alternative_names);
     const developers = this.extractCompanyNames(game, 'developer');
     const publishers = this.extractCompanyNames(game, 'publisher');
@@ -137,6 +139,8 @@ export class IgdbApi implements GameMetadataApi {
       publishers,
       franchise: game.franchises?.[0]?.name ?? '',
       collection: game.collections?.[0]?.name ?? '',
+      similarGame: this.joinList(similarGames),
+      similarGames,
       firstReleaseDate,
       releaseYear: firstReleaseDate ? firstReleaseDate.slice(0, 4) : '',
       rating: this.roundRating(game.rating),
