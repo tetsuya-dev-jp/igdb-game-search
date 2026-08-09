@@ -9,10 +9,6 @@ export function replaceIllegalFileNameCharactersInString(text: string) {
   return text.replace(/[\\,#%&{}/*<>$":@.?|]/g, '').replace(/\s+/g, ' ');
 }
 
-export function isISBN(str: string) {
-  return /^(97(8|9))?\d{9}(\d|X)$/.test(str);
-}
-
 export function makeFileName(game: GameEntry, fileNameFormat?: string, extension = 'md') {
   return `${makeFileStem(game, fileNameFormat)}.${extension}`;
 }
@@ -27,7 +23,7 @@ export function makeScreenshotFileName(index: number, extension = 'jpg') {
 }
 
 export function changeSnakeCase(game: GameEntry) {
-  return Object.entries(game).reduce((acc, [key, value]) => {
+  return Object.entries(game).reduce<Record<string, string | string[] | number | undefined>>((acc, [key, value]) => {
     acc[camelToSnakeCase(key)] = value;
     return acc;
   }, {});
@@ -38,7 +34,8 @@ export function applyDefaultFrontMatter(
   frontmatter: FrontMatter | string,
   keyType: DefaultFrontmatterKeyType = DefaultFrontmatterKeyType.snakeCase,
 ) {
-  const frontMatter = keyType === DefaultFrontmatterKeyType.camelCase ? game : changeSnakeCase(game);
+  const frontMatter: Record<string, string | string[] | number | undefined> =
+    keyType === DefaultFrontmatterKeyType.camelCase ? { ...game } : changeSnakeCase(game);
   const extraFrontMatter = typeof frontmatter === 'string' ? parseFrontMatter(frontmatter) : frontmatter;
 
   for (const key in extraFrontMatter) {
@@ -74,7 +71,7 @@ export function replaceVariableSyntax(game: GameEntry, text: string): string {
   return substituted.replace(new RegExp(`{{(?:${keys.join('|')})}}`, 'ig'), '').trim();
 }
 
-export function camelToSnakeCase(str) {
+export function camelToSnakeCase(str: string) {
   return str.replace(/[A-Z]/g, letter => `_${letter?.toLowerCase()}`);
 }
 
@@ -90,7 +87,7 @@ export function parseFrontMatter(frontMatterString: string) {
       const value = item.slice(index + 1)?.trim();
       return [key, value];
     })
-    .reduce((acc, [key, value]) => {
+    .reduce((acc: Record<string, string>, [key, value]) => {
       if (key) {
         acc[key] = value?.trim() ?? '';
       }
@@ -159,7 +156,7 @@ export function replaceDateInString(input: string) {
   return output;
 }
 
-function replacer(str: string, reg: RegExp, replaceValue) {
+function replacer(str: string, reg: RegExp, replaceValue: string) {
   return str.replace(reg, function () {
     return replaceValue;
   });

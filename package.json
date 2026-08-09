@@ -4,9 +4,6 @@
   "description": "Plugin for creating game notes with IGDB.",
   "homepage": "https://github.com/tetsuya-dev-jp/igdb-game-search",
   "main": "main.js",
-  "standard-version": {
-    "t": ""
-  },
   "keywords": [
     "game",
     "game note",
@@ -36,11 +33,9 @@
     "release-major-test": "standard-version --dry-run --release-as major",
     "release-minor": "standard-version --release-as minor",
     "release-minor-test": "standard-version --dry-run --release-as minor",
-    "prepare": "husky",
-    "deploy:pages": "gh-pages -d pages"
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@popperjs/core": "^2.11.8",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
     "@typescript-eslint/eslint-plugin": "^7.8.0",
@@ -48,7 +43,6 @@
     "builtin-modules": "^4.0.0",
     "esbuild": "0.20.2",
     "eslint": "^8.57.0",
-    "gh-pages": "^4.0.0",
     "husky": "^9.0.11",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
@@ -56,7 +50,6 @@
     "prettier": "^3.2.5",
     "standard-version": "^9.5.0",
     "ts-jest": "^29.1.2",
-    "ts-node": "^10.9.2",
     "tslib": "2.6.2",
     "typescript": "5.1.6"
   }

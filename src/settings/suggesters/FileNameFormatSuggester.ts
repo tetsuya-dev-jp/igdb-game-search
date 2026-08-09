@@ -6,9 +6,6 @@ export const DATE_FORMAT_SYNTAX = '{{DATE:}}';
 export const DATE_SYNTAX_SUGGEST_REGEX = /{{D?A?T?E?}?}?$/i;
 export const DATE_FORMAT_SYNTAX_SUGGEST_REGEX = /{{D?A?T?E?:?$|{{DATE:[^\n\r}]*}}$/i;
 
-export const AUTHOR_SYNTAX = '{{author}}';
-export const AUTHOR_SYNTAX_SUGGEST_REGEX = /{{a?u?t?h?o?r?}?}?$/i;
-
 export const TITLE_SYNTAX = '{{title}}';
 export const TITLE_SYNTAX_SUGGEST_REGEX = /{{t?i?t?l?e?}?}?$/i;
 
@@ -72,9 +69,6 @@ export class FileNameFormatSuggest extends AbstractInputSuggest<string> {
 
     const dateMatch = DATE_SYNTAX_SUGGEST_REGEX.exec(input);
     if (dateMatch) callback(dateMatch, DATE_SYNTAX);
-
-    const authorMatch = AUTHOR_SYNTAX_SUGGEST_REGEX.exec(input);
-    if (authorMatch) callback(authorMatch, AUTHOR_SYNTAX);
 
     const titleMatch = TITLE_SYNTAX_SUGGEST_REGEX.exec(input);
     if (titleMatch) callback(titleMatch, TITLE_SYNTAX);
