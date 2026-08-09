@@ -81,6 +81,12 @@ The IGDB API is free for non-commercial use under the Twitch Developer Service A
 
 <img width="700" src="https://github.com/user-attachments/assets/58c30330-45fa-4398-b643-2caecdd57337" />
 
+### UI language
+
+Choose the plugin UI language.
+
+`Auto` follows your current Obsidian language. You can also force `English`, `Japanese`, or `Korean`.
+
 ### Twitch Client ID / Client Secret
 
 Enter your Twitch `Client ID` and `Client Secret` in the plugin settings.
@@ -265,6 +271,7 @@ Write `{{name}}` in your template and replace `name` with the desired field.
 - **Install**: `pnpm install`
 - **Dev watch**: `pnpm dev` — builds `main.js` on change; copy `main.js`, `manifest.json`, `styles.css` to `VaultFolder/.obsidian/plugins/igdb-game-search/`.
 - **Verify**: `pnpm lint` (prettier + eslint + typecheck) and `pnpm test` (jest)
+- **Translations**: every new UI string must add a key to `src/locales/en.ts` and every locale file, and get a README row.
 - **Build**: `pnpm build`
 - **Release**: `pnpm release` (standard-version) — pushes a versioned tag; the GitHub Actions workflow builds and attaches the release assets.
 

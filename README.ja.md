@@ -83,6 +83,12 @@ IGDB API は、Twitch Developer Service Agreement の条件のもとで、非商
 
 <img width="700" src="https://github.com/user-attachments/assets/58c30330-45fa-4398-b643-2caecdd57337" />
 
+### UI language
+
+プラグインの UI 言語を選択します。
+
+`Auto` は現在の Obsidian の言語設定に追従します。`English`（英語）、`Japanese`（日本語）、`Korean`（韓国語）のいずれかに固定することもできます。
+
 ### Twitch Client ID / Client Secret
 
 プラグイン設定に Twitch の `Client ID` と `Client Secret` を入力します。
@@ -267,6 +273,7 @@ updated: '{{DATE:YYYY-MM-DD HH:mm:ss}}'
 - **インストール**: `pnpm install`
 - **開発用ウォッチ**: `pnpm dev` — 変更があると `main.js` をビルドします。`main.js`、`manifest.json`、`styles.css` を `VaultFolder/.obsidian/plugins/igdb-game-search/` にコピーしてください。
 - **検証**: `pnpm lint`（prettier + eslint + typecheck）と `pnpm test`（jest）
+- **翻訳**: 新しい UI 文字列を追加するときは、`src/locales/en.ts` とすべてのロケールファイルにキーを追加し、README にも行を追加してください。
 - **ビルド**: `pnpm build`
 - **リリース**: `pnpm release`（standard-version）— バージョンタグをプッシュします。GitHub Actions のワークフローがリリースアセットをビルドして添付します。
 

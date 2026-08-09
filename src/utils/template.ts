@@ -1,4 +1,5 @@
 import { App, normalizePath, Notice, TFile } from 'obsidian';
+import { t } from '@utils/i18n';
 
 export async function getTemplateContents(app: App, templatePath: string | undefined): Promise<string> {
   const { metadataCache, vault } = app;
@@ -12,7 +13,7 @@ export async function getTemplateContents(app: App, templatePath: string | undef
     return templateFile ? vault.cachedRead(templateFile) : '';
   } catch (err) {
     console.error(`Failed to read the template '${normalizedTemplatePath}'`, err);
-    new Notice('Failed to read the template file');
+    new Notice(t('notice.templateReadFailed'));
     return '';
   }
 }

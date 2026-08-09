@@ -6,6 +6,7 @@ import { GameEntry } from '@models/game.model';
 import { DEFAULT_SETTINGS, GameSearchPluginSettings, GameSearchSettingTab } from '@settings/settings';
 import { DeepLApi } from '@apis/deepl_api';
 import { withTimeout } from '@apis/base_api';
+import { t } from '@utils/i18n';
 import { applyTemplateTransformations, getTemplateContents, useTemplaterPluginInFile } from '@utils/template';
 import {
   applyDefaultFrontMatter,
@@ -27,14 +28,18 @@ export default class GameSearchPlugin extends Plugin {
     try {
       await this.loadSettings();
 
-      const ribbonIconEl = this.addRibbonIcon('gamepad-2', 'Create new game note', () => {
-        void this.createNewGameNote();
-      });
+      const ribbonIconEl = this.addRibbonIcon(
+        'gamepad-2',
+        t('command.createGameNote', this.settings.uiLanguage),
+        () => {
+          void this.createNewGameNote();
+        },
+      );
       ribbonIconEl.addClass('igdb-game-search-ribbon-class');
 
       this.addCommand({
         id: 'open-game-search-modal',
-        name: 'Create new game note',
+        name: t('command.createGameNote', this.settings.uiLanguage),
         callback: () => {
           void this.createNewGameNote();
         },
@@ -42,7 +47,7 @@ export default class GameSearchPlugin extends Plugin {
 
       this.addCommand({
         id: 'open-game-search-modal-to-insert',
-        name: 'Insert metadata',
+        name: t('command.insertMetadata', this.settings.uiLanguage),
         callback: () => {
           void this.insertMetadata();
         },
@@ -59,8 +64,10 @@ export default class GameSearchPlugin extends Plugin {
   }
 
   private toNoticeMessage(message: unknown): string {
+    const unexpectedError = t('notice.unexpectedError', this.settings?.uiLanguage);
+
     if (message instanceof Error) {
-      return message.message || 'An unexpected error occurred.';
+      return message.message || unexpectedError;
     }
 
     if (typeof message === 'string') {
@@ -68,14 +75,14 @@ export default class GameSearchPlugin extends Plugin {
     }
 
     if (message === null || message === undefined) {
-      return 'An unexpected error occurred.';
+      return unexpectedError;
     }
 
     if (typeof message === 'object') {
       try {
         return JSON.stringify(message);
       } catch {
-        return 'An unexpected error occurred.';
+        return unexpectedError;
       }
     }
 
@@ -83,7 +90,7 @@ export default class GameSearchPlugin extends Plugin {
       return `${message}`;
     }
 
-    return 'An unexpected error occurred.';
+    return unexpectedError;
   }
 
   showNotice(message: unknown): void {

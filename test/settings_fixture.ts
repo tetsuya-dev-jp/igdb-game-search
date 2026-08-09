@@ -22,6 +22,7 @@ export function createSettings(overrides: Partial<GameSearchPluginSettings> = {}
     enableTranslation: false,
     translationTargetLanguage: 'auto',
     deeplApiKey: '',
+    uiLanguage: 'auto',
     ...overrides,
   };
 }

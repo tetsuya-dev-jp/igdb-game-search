@@ -7,8 +7,8 @@ import { t } from '@utils/i18n';
 export class GameSearchModal extends Modal {
   // Cancel contract: dismissing the modal without a result resolves the caller's
   // promise with (null, []) exactly once; Esc during an in-flight search discards the result.
-  private readonly SEARCH_BUTTON_TEXT = t('search.button');
-  private readonly REQUESTING_BUTTON_TEXT = t('search.buttonRequesting');
+  private readonly SEARCH_BUTTON_TEXT = t('search.button', this.plugin.settings.uiLanguage);
+  private readonly REQUESTING_BUTTON_TEXT = t('search.buttonRequesting', this.plugin.settings.uiLanguage);
   private readonly igdbApi: IgdbApi;
   private isBusy = false;
   private cancelled = false;
@@ -26,11 +26,11 @@ export class GameSearchModal extends Modal {
 
   onOpen(): void {
     const { contentEl } = this;
-    contentEl.createEl('h2', { text: t('search.heading') });
+    contentEl.createEl('h2', { text: t('search.heading', this.plugin.settings.uiLanguage) });
     contentEl.createDiv({ cls: 'game-search-plugin__search-modal--input' }, el => {
       new TextComponent(el)
         .setValue(this.query)
-        .setPlaceholder('Search by game title')
+        .setPlaceholder(t('search.placeholder', this.plugin.settings.uiLanguage))
         .onChange(value => (this.query = value))
         .inputEl.addEventListener('keydown', event => {
           if (event.key === 'Enter' && !event.isComposing) {
@@ -68,14 +68,16 @@ export class GameSearchModal extends Modal {
   }
 
   private async searchGame(): Promise<void> {
-    if (!this.query.trim()) return void new Notice('No query entered.');
+    const uiLanguage = this.plugin.settings.uiLanguage;
+    if (!this.query.trim()) return void new Notice(t('search.noQuery', uiLanguage));
     if (this.isBusy) return;
 
     this.setBusy(true);
     try {
       const searchResults = await this.igdbApi.getByQuery(this.query);
       if (this.cancelled) return;
-      if (!searchResults.length) return void new Notice(`No results found for "${this.query}"`);
+      if (!searchResults.length)
+        return void new Notice(t('search.noResults', uiLanguage).replace('{query}', this.query));
       this.deliver(null, searchResults);
     } catch (err) {
       this.deliver(err as Error);

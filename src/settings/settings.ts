@@ -1,6 +1,7 @@
 import { replaceDateInString } from '@utils/utils';
 import { AUTO_TRANSLATION_LANGUAGE, DEEPL_TARGET_LANGUAGES } from '@utils/deepl_languages';
 import { App, PluginSettingTab, Setting } from 'obsidian';
+import { t, I18nKey } from '@utils/i18n';
 import GameSearchPlugin from '../main';
 import { FileNameFormatSuggest } from './suggesters/FileNameFormatSuggester';
 import { FileSuggest } from './suggesters/FileSuggester';
@@ -34,6 +35,7 @@ export interface GameSearchPluginSettings {
   enableTranslation: boolean;
   translationTargetLanguage: string;
   deeplApiKey: string;
+  uiLanguage: string;
 }
 
 export const DEFAULT_SETTINGS: GameSearchPluginSettings = {
@@ -57,6 +59,7 @@ export const DEFAULT_SETTINGS: GameSearchPluginSettings = {
   enableTranslation: false,
   translationTargetLanguage: AUTO_TRANSLATION_LANGUAGE,
   deeplApiKey: '',
+  uiLanguage: 'auto',
 };
 
 export class GameSearchSettingTab extends PluginSettingTab {
@@ -81,20 +84,42 @@ export class GameSearchSettingTab extends PluginSettingTab {
     this.createNoteContentSettings(containerEl);
   }
 
-  private createGeneralSettings(containerEl: HTMLElement) {
-    this.createHeader('General settings', containerEl);
-    this.createFileLocationSetting(containerEl);
-    this.createFileNameFormatSetting(containerEl);
+  private get lang(): string {
+    return this.plugin.settings.uiLanguage;
   }
 
-  private createHeader(title: string, containerEl: HTMLElement): void {
-    new Setting(containerEl).setName(title).setHeading();
+  private createGeneralSettings(containerEl: HTMLElement) {
+    this.createHeader('settings.general.header', containerEl);
+    this.createFileLocationSetting(containerEl);
+    this.createFileNameFormatSetting(containerEl);
+    this.createUiLanguageSetting(containerEl);
+  }
+
+  private createUiLanguageSetting(containerEl: HTMLElement) {
+    new Setting(containerEl)
+      .setName(t('settings.uiLanguage.name', this.lang))
+      .setDesc(t('settings.uiLanguage.desc', this.lang))
+      .addDropdown(dropdown => {
+        ['auto', 'en', 'ja', 'ko'].forEach(value => {
+          dropdown.addOption(value, value);
+        });
+
+        dropdown.setValue(this.plugin.settings.uiLanguage).onChange(async value => {
+          this.plugin.settings.uiLanguage = value;
+          await this.plugin.saveSettings();
+          this.display();
+        });
+      });
+  }
+
+  private createHeader(title: I18nKey, containerEl: HTMLElement): void {
+    new Setting(containerEl).setName(t(title, this.lang)).setHeading();
   }
 
   private createFileLocationSetting(containerEl: HTMLElement) {
     new Setting(containerEl)
-      .setName('New file location')
-      .setDesc('New game notes will be placed here.')
+      .setName(t('settings.general.location.name', this.lang))
+      .setDesc(t('settings.general.location.desc', this.lang))
       .addText(text => {
         const saveValue = async (value: string) => {
           this.plugin.settings.folder = value.trim();
@@ -107,7 +132,10 @@ export class GameSearchSettingTab extends PluginSettingTab {
           console.error(error);
         }
 
-        text.setPlaceholder('Example: games').setValue(this.plugin.settings.folder).onChange(saveValue);
+        text
+          .setPlaceholder(t('settings.general.location.placeholder', this.lang))
+          .setValue(this.plugin.settings.folder)
+          .onChange(saveValue);
       });
   }
 
@@ -118,8 +146,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setClass('game-search-plugin__settings--new_file_name')
-      .setName('New file name')
-      .setDesc('Enter the file name format.')
+      .setName(t('settings.general.fileName.name', this.lang))
+      .setDesc(t('settings.general.fileName.desc', this.lang))
       .addSearch(cb => {
         try {
           new FileNameFormatSuggest(this.app, cb.inputEl);
@@ -127,7 +155,7 @@ export class GameSearchSettingTab extends PluginSettingTab {
           console.error(error);
         }
 
-        cb.setPlaceholder('Example: {{title}}')
+        cb.setPlaceholder(t('settings.general.fileName.placeholder', this.lang))
           .setValue(this.plugin.settings.fileNameFormat)
           .onChange(async value => {
             this.plugin.settings.fileNameFormat = value.trim();
@@ -145,14 +173,14 @@ export class GameSearchSettingTab extends PluginSettingTab {
 
   private createTemplateFileSetting(containerEl: HTMLElement) {
     const templateFileDesc = document.createDocumentFragment();
-    templateFileDesc.createDiv({ text: 'Files will be available as templates.' });
+    templateFileDesc.createDiv({ text: t('settings.template.desc', this.lang) });
     templateFileDesc.createEl('a', {
-      text: 'Example template',
+      text: t('settings.template.exampleButton', this.lang),
       href: `${docUrl}#example-template`,
     });
 
     new Setting(containerEl)
-      .setName('Template file')
+      .setName(t('settings.template.name', this.lang))
       .setDesc(templateFileDesc)
       .addText(text => {
         const saveValue = async (value: string) => {
@@ -167,18 +195,18 @@ export class GameSearchSettingTab extends PluginSettingTab {
         }
 
         text
-          .setPlaceholder('Example: templates/game-note')
+          .setPlaceholder(t('settings.template.placeholder', this.lang))
           .setValue(this.plugin.settings.templateFile)
           .onChange(saveValue);
       });
   }
 
   private createIgdbSettings(containerEl: HTMLElement) {
-    this.createHeader('IGDB authentication', containerEl);
+    this.createHeader('settings.igdb.header', containerEl);
 
     new Setting(containerEl)
-      .setName('Twitch client ID')
-      .setDesc('Used to request an access token for game metadata.')
+      .setName(t('settings.igdb.clientId.name', this.lang))
+      .setDesc(t('settings.igdb.clientId.desc', this.lang))
       .addText(text =>
         text.setValue(this.plugin.settings.twitchClientId).onChange(async value => {
           this.plugin.settings.twitchClientId = value.trim();
@@ -189,8 +217,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Twitch client secret')
-      .setDesc('Stored locally in plugin data and used to refresh the access token.')
+      .setName(t('settings.igdb.clientSecret.name', this.lang))
+      .setDesc(t('settings.igdb.clientSecret.desc', this.lang))
       .addText(text => {
         text.inputEl.type = 'password';
         text.setValue(this.plugin.settings.twitchClientSecret).onChange(async value => {
@@ -203,11 +231,11 @@ export class GameSearchSettingTab extends PluginSettingTab {
   }
 
   private createSearchSettings(containerEl: HTMLElement) {
-    this.createHeader('Search experience', containerEl);
+    this.createHeader('settings.search.header', containerEl);
 
     new Setting(containerEl)
-      .setName('Show cover images in search')
-      .setDesc('Display cover art in the suggestion list.')
+      .setName(t('settings.search.cover.name', this.lang))
+      .setDesc(t('settings.search.cover.desc', this.lang))
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.showCoverImageInSearch).onChange(async value => {
           this.plugin.settings.showCoverImageInSearch = value;
@@ -217,11 +245,11 @@ export class GameSearchSettingTab extends PluginSettingTab {
   }
 
   private createTranslationSettings(containerEl: HTMLElement) {
-    this.createHeader('Translation', containerEl);
+    this.createHeader('settings.translation.header', containerEl);
 
     new Setting(containerEl)
-      .setName('Enable translation')
-      .setDesc('Translate the summary and storyline before rendering note content.')
+      .setName(t('settings.translation.enable.name', this.lang))
+      .setDesc(t('settings.translation.enable.desc', this.lang))
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.enableTranslation).onChange(async value => {
           this.plugin.settings.enableTranslation = value;
@@ -231,8 +259,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Translation target language')
-      .setDesc('Choose the target language, or follow your current Obsidian language automatically.')
+      .setName(t('settings.translation.target.name', this.lang))
+      .setDesc(t('settings.translation.target.desc', this.lang))
       .addDropdown(dropdown => {
         Object.entries(DEEPL_TARGET_LANGUAGES).forEach(([value, label]) => {
           dropdown.addOption(value, label);
@@ -248,12 +276,12 @@ export class GameSearchSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Translation service key')
-      .setDesc('Stored locally in plugin data and used only for translating the summary and storyline.')
+      .setName(t('settings.translation.key.name', this.lang))
+      .setDesc(t('settings.translation.key.desc', this.lang))
       .addText(text => {
         text.inputEl.type = 'password';
         text
-          .setPlaceholder('Translation service key')
+          .setPlaceholder(t('settings.translation.key.name', this.lang))
           .setValue(this.plugin.settings.deeplApiKey)
           .setDisabled(!this.plugin.settings.enableTranslation)
           .onChange(async value => {
@@ -264,11 +292,11 @@ export class GameSearchSettingTab extends PluginSettingTab {
   }
 
   private createNoteSettings(containerEl: HTMLElement) {
-    this.createHeader('Note creation', containerEl);
+    this.createHeader('settings.note.header', containerEl);
 
     new Setting(containerEl)
-      .setName('Open new game note')
-      .setDesc('Automatically open the created note.')
+      .setName(t('settings.note.open.name', this.lang))
+      .setDesc(t('settings.note.open.desc', this.lang))
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.openPageOnCompletion).onChange(async value => {
           this.plugin.settings.openPageOnCompletion = value;
@@ -277,8 +305,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Enable cover image save')
-      .setDesc('Download the selected game cover into your vault.')
+      .setName(t('settings.note.coverSave.name', this.lang))
+      .setDesc(t('settings.note.coverSave.desc', this.lang))
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.enableCoverImageSave).onChange(async value => {
           this.plugin.settings.enableCoverImageSave = value;
@@ -287,8 +315,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Cover image folder')
-      .setDesc('Folder used when cover image saving is enabled.')
+      .setName(t('settings.note.coverFolder.name', this.lang))
+      .setDesc(t('settings.note.coverFolder.desc', this.lang))
       .addText(text => {
         const saveValue = async (value: string) => {
           this.plugin.settings.coverImagePath = value.trim();
@@ -302,14 +330,14 @@ export class GameSearchSettingTab extends PluginSettingTab {
         }
 
         text
-          .setPlaceholder('Example: assets/game-covers')
+          .setPlaceholder(t('settings.note.coverFolder.placeholder', this.lang))
           .setValue(this.plugin.settings.coverImagePath)
           .onChange(saveValue);
       });
 
     new Setting(containerEl)
-      .setName('Enable screenshot save')
-      .setDesc('Download screenshots into your vault.')
+      .setName(t('settings.note.screenshotSave.name', this.lang))
+      .setDesc(t('settings.note.screenshotSave.desc', this.lang))
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.enableScreenshotSave).onChange(async value => {
           this.plugin.settings.enableScreenshotSave = value;
@@ -319,8 +347,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Screenshot folder')
-      .setDesc('Root folder used when screenshot saving is enabled. Each game gets its own subfolder.')
+      .setName(t('settings.note.screenshotFolder.name', this.lang))
+      .setDesc(t('settings.note.screenshotFolder.desc', this.lang))
       .addText(text => {
         const saveValue = async (value: string) => {
           this.plugin.settings.screenshotImagePath = value.trim();
@@ -334,7 +362,7 @@ export class GameSearchSettingTab extends PluginSettingTab {
         }
 
         text
-          .setPlaceholder('Example: assets/game-screenshots')
+          .setPlaceholder(t('settings.note.screenshotFolder.placeholder', this.lang))
           .setValue(this.plugin.settings.screenshotImagePath)
           .setDisabled(!this.plugin.settings.enableScreenshotSave)
           .onChange(saveValue);
@@ -342,11 +370,11 @@ export class GameSearchSettingTab extends PluginSettingTab {
   }
 
   private createNoteContentSettings(containerEl: HTMLElement) {
-    this.createHeader('Note content', containerEl);
+    this.createHeader('settings.content.header', containerEl);
 
     new Setting(containerEl)
-      .setName('Use default frontmatter')
-      .setDesc('Include game metadata (title, platforms, ratings...) as frontmatter.')
+      .setName(t('settings.content.defaultFm.name', this.lang))
+      .setDesc(t('settings.content.defaultFm.desc', this.lang))
       .addToggle(toggle =>
         toggle.setValue(this.plugin.settings.useDefaultFrontmatter).onChange(async value => {
           this.plugin.settings.useDefaultFrontmatter = value;
@@ -356,8 +384,8 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Frontmatter key style')
-      .setDesc('Choose the key style used for the default game metadata frontmatter.')
+      .setName(t('settings.content.keyStyle.name', this.lang))
+      .setDesc(t('settings.content.keyStyle.desc', this.lang))
       .addDropdown(dropdown => {
         Object.values(DefaultFrontmatterKeyType).forEach(value => {
           dropdown.addOption(value, value);
@@ -373,11 +401,11 @@ export class GameSearchSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Extra frontmatter')
-      .setDesc('Additional YAML keys merged into the frontmatter. One `key: value` per line.')
+      .setName(t('settings.content.extraFm.name', this.lang))
+      .setDesc(t('settings.content.extraFm.desc', this.lang))
       .addTextArea(text =>
         text
-          .setPlaceholder('Example: play_status: backlog')
+          .setPlaceholder(t('settings.content.extraFm.placeholder', this.lang))
           .setValue(this.plugin.settings.frontmatter)
           .onChange(async value => {
             this.plugin.settings.frontmatter = value;
@@ -386,11 +414,11 @@ export class GameSearchSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Note content')
-      .setDesc('Body template used when no template file is set. Supports `{{variable}}` syntax.')
+      .setName(t('settings.content.body.name', this.lang))
+      .setDesc(t('settings.content.body.desc', this.lang))
       .addTextArea(text =>
         text
-          .setPlaceholder('Example: ## {{title}}\n{{summary}}')
+          .setPlaceholder(t('settings.content.body.placeholder', this.lang))
           .setValue(this.plugin.settings.content)
           .onChange(async value => {
             this.plugin.settings.content = value;
