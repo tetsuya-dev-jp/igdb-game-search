@@ -1,7 +1,17 @@
-import { ConfigurationError } from '@apis/base_api';
+import { ApiError, apiRequest, ConfigurationError } from '@apis/base_api';
 import { createSettings } from '../../test/settings_fixture';
 import { IgdbApi } from './igdb_api';
-import { IgdbGame } from './models/igdb_response';
+import { IgdbGame, TwitchAccessTokenResponse } from './models/igdb_response';
+
+jest.mock('@apis/base_api', () => {
+  const actual = jest.requireActual('@apis/base_api');
+  return {
+    ...actual,
+    apiRequest: jest.fn(),
+  };
+});
+
+const mockedApiRequest = apiRequest as jest.MockedFunction<typeof apiRequest>;
 
 describe('IgdbApi', () => {
   const saveSettings = jest.fn(() => Promise.resolve());
@@ -78,5 +88,103 @@ describe('IgdbApi', () => {
     );
 
     await expect(api.ensureAccessToken()).rejects.toBeInstanceOf(ConfigurationError);
+  });
+});
+
+describe('IGDB auth path', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const twitchTokenResponse: TwitchAccessTokenResponse = {
+    access_token: 'fresh-token',
+    expires_in: 5000,
+    token_type: 'bearer',
+  };
+
+  const makeApi = (overrides: Partial<ReturnType<typeof createSettings>> = {}) =>
+    new IgdbApi(
+      createSettings({ twitchClientId: 'client', twitchClientSecret: 'secret', ...overrides }),
+      jest.fn(() => Promise.resolve()),
+    );
+
+  it('uses the cached token without calling Twitch', async () => {
+    const api = makeApi({
+      igdbAccessToken: 'cached-token',
+      igdbAccessTokenExpiresAt: Date.now() + 120_000,
+    });
+    mockedApiRequest.mockResolvedValueOnce([]);
+
+    await expect(api.getByQuery('Elden Ring')).resolves.toEqual([]);
+
+    expect(mockedApiRequest).toHaveBeenCalledTimes(1);
+    const [, options] = mockedApiRequest.mock.calls[0];
+    expect(options?.headers?.Authorization).toBe('Bearer cached-token');
+  });
+
+  it('refreshes the token when expired', async () => {
+    const saveSettings = jest.fn(() => Promise.resolve());
+    const api = new IgdbApi(
+      createSettings({
+        twitchClientId: 'client',
+        twitchClientSecret: 'secret',
+        igdbAccessToken: 'old-token',
+        igdbAccessTokenExpiresAt: Date.now() - 1000,
+      }),
+      saveSettings,
+    );
+    mockedApiRequest.mockResolvedValueOnce(twitchTokenResponse).mockResolvedValueOnce([]);
+
+    await expect(api.getByQuery('Elden Ring')).resolves.toEqual([]);
+
+    expect(mockedApiRequest).toHaveBeenCalledTimes(2);
+    expect(mockedApiRequest.mock.calls[0][0]).toBe('https://id.twitch.tv/oauth2/token');
+    const [, searchOptions] = mockedApiRequest.mock.calls[1];
+    expect(searchOptions?.headers?.Authorization).toBe('Bearer fresh-token');
+    expect(saveSettings).toHaveBeenCalled();
+  });
+
+  it('refreshes the token when near expiry (within the 60s buffer)', async () => {
+    const api = makeApi({
+      igdbAccessToken: 'old-token',
+      igdbAccessTokenExpiresAt: Date.now() + 30_000,
+    });
+    mockedApiRequest.mockResolvedValueOnce(twitchTokenResponse).mockResolvedValueOnce([]);
+
+    await expect(api.getByQuery('Elden Ring')).resolves.toEqual([]);
+
+    expect(mockedApiRequest).toHaveBeenCalledTimes(2);
+    const [, refreshedSearchOptions] = mockedApiRequest.mock.calls[1];
+    expect(refreshedSearchOptions?.headers?.Authorization).toBe('Bearer fresh-token');
+  });
+
+  it('retries once with a fresh token on 401', async () => {
+    const api = makeApi({
+      igdbAccessToken: 'stale-token',
+      igdbAccessTokenExpiresAt: Date.now() + 120_000,
+    });
+    mockedApiRequest
+      .mockRejectedValueOnce(new ApiError('Request failed with status 401', 401))
+      .mockResolvedValueOnce(twitchTokenResponse)
+      .mockResolvedValueOnce([]);
+
+    await expect(api.getByQuery('Elden Ring')).resolves.toEqual([]);
+
+    expect(mockedApiRequest).toHaveBeenCalledTimes(3);
+    const [, retryOptions] = mockedApiRequest.mock.calls[2];
+    expect(retryOptions?.headers?.Authorization).toBe('Bearer fresh-token');
+  });
+
+  it('rethrows non-401 errors without retrying', async () => {
+    const api = makeApi({
+      igdbAccessToken: 'cached-token',
+      igdbAccessTokenExpiresAt: Date.now() + 120_000,
+    });
+    const error = new ApiError('Request failed with status 500', 500);
+    mockedApiRequest.mockRejectedValueOnce(error);
+
+    await expect(api.getByQuery('Elden Ring')).rejects.toBe(error);
+
+    expect(mockedApiRequest).toHaveBeenCalledTimes(1);
   });
 });
