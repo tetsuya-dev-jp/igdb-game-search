@@ -51,6 +51,22 @@ jobs:
         id: build
         run: pnpm build
 
+      - name: Extract changelog section for this release
+        id: changelog
+        shell: bash
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          awk -v ver="[$VERSION]" '
+            $0 ~ "^## \\[" {
+              if (in_section) exit;
+              if (index($0, ver) > 0) { in_section = 1; print; next }
+            }
+            in_section { print }
+          ' CHANGELOG.md > "${{ github.workspace }}/release-notes.md"
+          if [ ! -s "${{ github.workspace }}/release-notes.md" ]; then
+            echo "No changelog section found for $VERSION" > "${{ github.workspace }}/release-notes.md"
+          fi
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -59,3 +75,4 @@ jobs:
             main.js
             styles.css
             manifest.json
+          body_path: ${{ github.workspace }}/release-notes.md
