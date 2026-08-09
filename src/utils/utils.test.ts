@@ -242,12 +242,9 @@ describe('replaceDateInString / getDate', () => {
     expect(utils.replaceDateInString('{{DATE}}')).toBe('2026-01-15');
   });
 
-  it('applies day offsets to {{DATE+...}} but not {{DATE-...}}', () => {
+  it('applies day offsets to {{DATE±N}}', () => {
     expect(utils.replaceDateInString('{{DATE+1}}')).toBe('2026-01-16');
-    // Plan 003 expected {{DATE-2}} support, but the regex requires a literal `+`
-    // (DATE_REGEX: /{{DATE(\+-?[0-9]+)?}}/), so a bare `-` offset is left untouched.
-    // Deliberately unchanged — negative-offset date handling is out of plan 007 scope.
-    expect(utils.replaceDateInString('{{DATE-2}}')).toBe('{{DATE-2}}');
+    expect(utils.replaceDateInString('{{DATE-2}}')).toBe('2026-01-13');
   });
 
   it('supports a custom format in {{DATE:format}}', () => {
@@ -256,6 +253,7 @@ describe('replaceDateInString / getDate', () => {
 
   it('combines format and offset in {{DATE:format±N}}', () => {
     expect(utils.replaceDateInString('{{DATE:YYYY-MM-DD+7}}')).toBe('2026-01-22');
+    expect(utils.replaceDateInString('{{DATE:YYYY-MM-DD-7}}')).toBe('2026-01-08');
   });
 
   it('leaves text without a date placeholder unchanged', () => {

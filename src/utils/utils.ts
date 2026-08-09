@@ -2,8 +2,8 @@ import { FrontMatter, GameEntry } from '@models/game.model';
 import { DefaultFrontmatterKeyType } from '@settings/settings';
 
 export const NUMBER_REGEX = /^-?[0-9]*$/;
-export const DATE_REGEX = /{{DATE(\+-?[0-9]+)?}}/;
-export const DATE_REGEX_FORMATTED = /{{DATE:([^}\n\r+]*)(\+-?[0-9]+)?}}/;
+export const DATE_REGEX = /{{DATE([+-]?\d+)?}}/;
+export const DATE_REGEX_FORMATTED = /{{DATE:([^}\n\r]*?)([+-]?\d+)?}}/;
 
 export function replaceIllegalFileNameCharactersInString(text: string) {
   return text.replace(/[\\,#%&{}/*<>$":@.?|]/g, '').replace(/\s+/g, ' ');
