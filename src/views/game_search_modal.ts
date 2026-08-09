@@ -2,12 +2,13 @@ import { IgdbApi } from '@apis/igdb_api';
 import { GameEntry } from '@models/game.model';
 import GameSearchPlugin from '@src/main';
 import { ButtonComponent, Modal, Notice, Setting, TextComponent } from 'obsidian';
+import { t } from '@utils/i18n';
 
 export class GameSearchModal extends Modal {
   // Cancel contract: dismissing the modal without a result resolves the caller's
   // promise with (null, []) exactly once; Esc during an in-flight search discards the result.
-  private readonly SEARCH_BUTTON_TEXT = 'Search';
-  private readonly REQUESTING_BUTTON_TEXT = 'Requesting...';
+  private readonly SEARCH_BUTTON_TEXT = t('search.button');
+  private readonly REQUESTING_BUTTON_TEXT = t('search.buttonRequesting');
   private readonly igdbApi: IgdbApi;
   private isBusy = false;
   private cancelled = false;
@@ -25,7 +26,7 @@ export class GameSearchModal extends Modal {
 
   onOpen(): void {
     const { contentEl } = this;
-    contentEl.createEl('h2', { text: 'Search game' });
+    contentEl.createEl('h2', { text: t('search.heading') });
     contentEl.createDiv({ cls: 'game-search-plugin__search-modal--input' }, el => {
       new TextComponent(el)
         .setValue(this.query)
