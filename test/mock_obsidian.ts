@@ -27,7 +27,14 @@ export class Modal {
   contentEl: any;
   constructor(app: any) {
     this.app = app;
-    this.contentEl = { empty: jest.fn(), createEl: jest.fn().mockReturnValue({ addClass: jest.fn() }) };
+    this.contentEl = {
+      empty: jest.fn(),
+      createEl: jest.fn().mockReturnValue({ addClass: jest.fn(), createEl: jest.fn(), createDiv: jest.fn() }),
+      createDiv: jest.fn((_cls?: unknown, cb?: (el: unknown) => void) => {
+        cb?.({});
+        return {};
+      }),
+    };
   }
   open = jest.fn();
   close = jest.fn();
@@ -60,8 +67,31 @@ export class Setting {
   addText = jest.fn().mockReturnValue(this);
   addToggle = jest.fn().mockReturnValue(this);
   addDropdown = jest.fn().mockReturnValue(this);
-  addButton = jest.fn().mockReturnValue(this);
+  addButton = jest.fn((cb?: (btn: ButtonComponent) => void) => {
+    cb?.(new ButtonComponent());
+    return this;
+  });
   addSearch = jest.fn().mockReturnValue(this);
 }
 
 export const normalizePath = (p: string) => p.replace(/\/+/g, '/');
+
+export class TextComponent {
+  inputEl: HTMLInputElement;
+  constructor() {
+    this.inputEl = document.createElement('input');
+  }
+  setValue = jest.fn((v: string) => {
+    this.inputEl.value = v;
+    return this;
+  });
+  setPlaceholder = jest.fn().mockReturnValue(this);
+  onChange = jest.fn().mockReturnValue(this);
+}
+
+export class ButtonComponent {
+  setButtonText = jest.fn().mockReturnValue(this);
+  setCta = jest.fn().mockReturnValue(this);
+  setDisabled = jest.fn().mockReturnValue(this);
+  onClick = jest.fn().mockReturnValue(this);
+}

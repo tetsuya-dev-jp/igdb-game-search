@@ -4,10 +4,14 @@ import GameSearchPlugin from '@src/main';
 import { ButtonComponent, Modal, Notice, Setting, TextComponent } from 'obsidian';
 
 export class GameSearchModal extends Modal {
+  // Cancel contract: dismissing the modal without a result resolves the caller's
+  // promise with (null, []) exactly once; Esc during an in-flight search discards the result.
   private readonly SEARCH_BUTTON_TEXT = 'Search';
   private readonly REQUESTING_BUTTON_TEXT = 'Requesting...';
   private readonly igdbApi: IgdbApi;
   private isBusy = false;
+  private cancelled = false;
+  private delivered = false;
   private okBtnRef?: ButtonComponent;
 
   constructor(
@@ -44,7 +48,17 @@ export class GameSearchModal extends Modal {
   }
 
   onClose(): void {
+    if (!this.delivered) {
+      this.delivered = true;
+      this.cancelled = true;
+      this.callback(null, []);
+    }
     this.contentEl.empty();
+  }
+
+  private deliver(error: Error | null, result?: GameEntry[]): void {
+    this.delivered = true;
+    this.callback(error, result);
   }
 
   private setBusy(busy: boolean): void {
@@ -59,10 +73,11 @@ export class GameSearchModal extends Modal {
     this.setBusy(true);
     try {
       const searchResults = await this.igdbApi.getByQuery(this.query);
+      if (this.cancelled) return;
       if (!searchResults.length) return void new Notice(`No results found for "${this.query}"`);
-      this.callback(null, searchResults);
+      this.deliver(null, searchResults);
     } catch (err) {
-      this.callback(err as Error);
+      this.deliver(err as Error);
     } finally {
       this.setBusy(false);
       this.close();

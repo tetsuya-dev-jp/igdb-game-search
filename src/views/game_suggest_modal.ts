@@ -2,6 +2,10 @@ import { App, SuggestModal } from 'obsidian';
 import { GameEntry } from '@models/game.model';
 
 export class GameSuggestModal extends SuggestModal<GameEntry> {
+  // Cancel contract: dismissing the modal without a choice resolves the caller's
+  // promise with (null, undefined) exactly once.
+  private delivered = false;
+
   constructor(
     app: App,
     private readonly showCoverImageInSearch: boolean,
@@ -47,6 +51,14 @@ export class GameSuggestModal extends SuggestModal<GameEntry> {
   }
 
   onChooseSuggestion(game: GameEntry) {
+    this.delivered = true;
     this.onChoose(null, game);
+  }
+
+  onClose(): void {
+    if (!this.delivered) {
+      this.delivered = true;
+      this.onChoose(null, undefined);
+    }
   }
 }

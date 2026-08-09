@@ -93,8 +93,11 @@ export default class GameSearchPlugin extends Plugin {
     }
   }
 
-  async searchGameMetadata(query?: string): Promise<GameEntry> {
+  async searchGameMetadata(query?: string): Promise<GameEntry | undefined> {
     const searchedGames = await this.openGameSearchModal(query);
+    if (!searchedGames.length) {
+      return undefined; // user cancelled the search (or no results)
+    }
     return this.openGameSuggestModal(searchedGames);
   }
 
@@ -245,6 +248,7 @@ export default class GameSearchPlugin extends Plugin {
       }
 
       const game = await this.searchGameMetadata(markdownView.file.basename);
+      if (!game) return; // user cancelled
 
       if (!markdownView.editor) {
         console.warn('Can not find editor from the active markdown view');
@@ -262,6 +266,8 @@ export default class GameSearchPlugin extends Plugin {
   async createNewGameNote(): Promise<void> {
     try {
       const game = await this.searchGameMetadata();
+      if (!game) return; // user cancelled
+
       const renderedContents = await this.getRenderedContents(game);
 
       const fileName = makeFileName(game, this.settings.fileNameFormat);
@@ -299,7 +305,7 @@ export default class GameSearchPlugin extends Plugin {
     });
   }
 
-  async openGameSuggestModal(games: GameEntry[]): Promise<GameEntry> {
+  async openGameSuggestModal(games: GameEntry[]): Promise<GameEntry | undefined> {
     return new Promise((resolve, reject) => {
       const modal = new GameSuggestModal(
         this.app,
