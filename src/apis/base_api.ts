@@ -29,28 +29,41 @@ export async function apiRequest<T>(
     params?: Record<string, string | number>;
     headers?: Record<string, string>;
     body?: string;
+    timeoutMs?: number;
   } = {},
 ): Promise<T> {
   const apiURL = new URL(url);
   appendQueryParams(apiURL, options.params ?? {});
 
-  const res = await requestUrl({
-    url: apiURL.href,
-    method: options.method ?? 'GET',
-    body: options.body,
-    headers: {
-      Accept: '*/*',
-      'Content-Type': 'application/json; charset=utf-8',
-      ...options.headers,
-    },
-    throw: false,
-  });
+  const res = await withTimeout(
+    requestUrl({
+      url: apiURL.href,
+      method: options.method ?? 'GET',
+      body: options.body,
+      headers: {
+        Accept: '*/*',
+        'Content-Type': 'application/json; charset=utf-8',
+        ...options.headers,
+      },
+      throw: false,
+    }),
+    options.timeoutMs ?? 30_000,
+  );
 
   if (res.status >= 400) {
     throw new ApiError(`Request failed with status ${res.status}`, res.status);
   }
 
   return res.json as T;
+}
+
+export function withTimeout<T>(promise: Promise<T>, timeoutMs = 30_000, message = 'Request timed out'): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new ApiError(message, 408)), timeoutMs);
+    }),
+  ]);
 }
 
 function appendQueryParams(url: URL, params: Record<string, string | number>): void {

@@ -5,6 +5,7 @@ import { CursorJumper } from '@utils/cursor_jumper';
 import { GameEntry } from '@models/game.model';
 import { DEFAULT_SETTINGS, GameSearchPluginSettings, GameSearchSettingTab } from '@settings/settings';
 import { DeepLApi } from '@apis/deepl_api';
+import { withTimeout } from '@apis/base_api';
 import { applyTemplateTransformations, getTemplateContents, useTemplaterPluginInFile } from '@utils/template';
 import {
   applyDefaultFrontMatter,
@@ -163,13 +164,15 @@ export default class GameSearchPlugin extends Plugin {
 
   async downloadAndSaveImage(imageName: string, directory: string, imageUrl: string): Promise<string> {
     try {
-      const response = await requestUrl({
-        url: imageUrl,
-        method: 'GET',
-        headers: {
-          Accept: 'image/*',
-        },
-      });
+      const response = await withTimeout(
+        requestUrl({
+          url: imageUrl,
+          method: 'GET',
+          headers: {
+            Accept: 'image/*',
+          },
+        }),
+      );
 
       if (response.status !== 200) {
         throw new Error(`Failed to download image: ${response.status}`);
