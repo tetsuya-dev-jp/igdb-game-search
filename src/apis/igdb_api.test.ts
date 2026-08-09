@@ -1,33 +1,12 @@
 import { ConfigurationError } from '@apis/base_api';
-import type { GameSearchPluginSettings } from '@settings/settings';
+import { createSettings } from '../../test/settings_fixture';
 import { IgdbApi } from './igdb_api';
 import { IgdbGame } from './models/igdb_response';
 
 describe('IgdbApi', () => {
   const saveSettings = jest.fn(() => Promise.resolve());
 
-  const settings: GameSearchPluginSettings = {
-    folder: '',
-    fileNameFormat: '{{title}}',
-    frontmatter: '',
-    content: '',
-    useDefaultFrontmatter: true,
-    defaultFrontmatterKeyType: 'Camel Case' as GameSearchPluginSettings['defaultFrontmatterKeyType'],
-    templateFile: '',
-    twitchClientId: 'client',
-    twitchClientSecret: 'secret',
-    igdbAccessToken: '',
-    igdbAccessTokenExpiresAt: 0,
-    openPageOnCompletion: true,
-    showCoverImageInSearch: false,
-    enableCoverImageSave: false,
-    coverImagePath: '',
-    enableScreenshotSave: false,
-    screenshotImagePath: '',
-    enableTranslation: false,
-    translationTargetLanguage: 'auto',
-    deeplApiKey: '',
-  };
+  const settings = createSettings({ twitchClientId: 'client', twitchClientSecret: 'secret' });
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,5 +1,5 @@
 import { ConfigurationError, apiRequest } from '@apis/base_api';
-import type { GameSearchPluginSettings } from '@settings/settings';
+import { createSettings } from '../../test/settings_fixture';
 import { DeepLApi, DEEPL_FREE_TRANSLATE_URL, DEEPL_PRO_TRANSLATE_URL } from './deepl_api';
 
 jest.mock('@apis/base_api', () => {
@@ -15,30 +15,6 @@ const mockedApiRequest = apiRequest as jest.MockedFunction<typeof apiRequest>;
 describe('DeepLApi', () => {
   const momentWindow = window as Window & { moment?: { locale: () => string } };
   const originalMoment = momentWindow.moment;
-
-  const createSettings = (overrides: Partial<GameSearchPluginSettings> = {}): GameSearchPluginSettings => ({
-    folder: '',
-    fileNameFormat: '{{title}}',
-    frontmatter: '',
-    content: '',
-    useDefaultFrontmatter: true,
-    defaultFrontmatterKeyType: 'Camel Case' as GameSearchPluginSettings['defaultFrontmatterKeyType'],
-    templateFile: '',
-    twitchClientId: 'client',
-    twitchClientSecret: 'secret',
-    igdbAccessToken: '',
-    igdbAccessTokenExpiresAt: 0,
-    openPageOnCompletion: true,
-    showCoverImageInSearch: false,
-    enableCoverImageSave: false,
-    coverImagePath: '',
-    enableScreenshotSave: false,
-    screenshotImagePath: '',
-    enableTranslation: true,
-    translationTargetLanguage: 'JA',
-    deeplApiKey: 'test-key',
-    ...overrides,
-  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -59,7 +35,13 @@ describe('DeepLApi', () => {
       ],
     });
 
-    const api = new DeepLApi(createSettings());
+    const api = new DeepLApi(
+      createSettings({
+        enableTranslation: true,
+        translationTargetLanguage: 'JA',
+        deeplApiKey: 'test-key',
+      }),
+    );
     const translated = await api.translateGameEntry({
       title: 'The Legend of Zelda: Breath of the Wild',
       summary: 'Open-air adventure.',
@@ -90,6 +72,8 @@ describe('DeepLApi', () => {
 
     const api = new DeepLApi(
       createSettings({
+        enableTranslation: true,
+        translationTargetLanguage: 'JA',
         deeplApiKey: 'free-key:fx',
       }),
     );
@@ -115,7 +99,13 @@ describe('DeepLApi', () => {
       translations: [{ detected_source_language: 'EN', text: '要約だけ翻訳' }],
     });
 
-    const api = new DeepLApi(createSettings());
+    const api = new DeepLApi(
+      createSettings({
+        enableTranslation: true,
+        translationTargetLanguage: 'JA',
+        deeplApiKey: 'test-key',
+      }),
+    );
     const translated = await api.translateGameEntry({
       title: 'Halo',
       summary: 'Master Chief returns.',
@@ -149,7 +139,9 @@ describe('DeepLApi', () => {
 
     const api = new DeepLApi(
       createSettings({
+        enableTranslation: true,
         translationTargetLanguage: 'auto',
+        deeplApiKey: 'test-key',
       }),
     );
 
@@ -173,7 +165,9 @@ describe('DeepLApi', () => {
 
     const api = new DeepLApi(
       createSettings({
+        enableTranslation: true,
         translationTargetLanguage: 'auto',
+        deeplApiKey: 'test-key',
       }),
     );
 
@@ -196,6 +190,8 @@ describe('DeepLApi', () => {
   it('throws when translation is enabled but the API key is missing', async () => {
     const api = new DeepLApi(
       createSettings({
+        enableTranslation: true,
+        translationTargetLanguage: 'JA',
         deeplApiKey: '',
       }),
     );

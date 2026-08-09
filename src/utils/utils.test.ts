@@ -1,7 +1,10 @@
 import { GameEntry } from '@models/game.model';
 import * as utils from './utils';
 
-jest.mock('@settings/settings', () => jest.fn());
+jest.mock('@settings/settings', () => ({
+  ...jest.requireActual('@settings/settings'),
+  __esModule: true,
+}));
 
 describe('utils', () => {
   const game: GameEntry = {
