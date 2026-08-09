@@ -20,3 +20,7 @@ data.json
 
 coverage/*
 .crossnote
+
+# E2E harness (downloaded AppImage + throwaway test vault)
+e2e/.cache/
+e2e/.vault/
