@@ -3,6 +3,15 @@ import { GameEntry } from '@models/game.model';
 import GameSearchPlugin from './main';
 import { createSettings } from '../test/settings_fixture';
 
+jest.mock('obsidian', () => ({
+  ...jest.requireActual('obsidian'),
+  requestUrl: jest.fn(),
+}));
+
+import { requestUrl } from 'obsidian';
+
+const mockRequestUrl = requestUrl as jest.Mock;
+
 describe('GameSearchPlugin.getRenderedContents', () => {
   const game: GameEntry = {
     title: 'Elden Ring',
@@ -81,5 +90,93 @@ describe('GameSearchPlugin.getRenderedContents', () => {
     const output = await plugin.getRenderedContents(game);
 
     expect(output).toContain('title: Elden Ring');
+  });
+});
+
+describe('GameSearchPlugin.downloadAndSaveImage', () => {
+  let plugin: any;
+
+  beforeEach(() => {
+    mockRequestUrl.mockReset();
+    mockRequestUrl.mockResolvedValue({ status: 200, arrayBuffer: new ArrayBuffer(8) });
+
+    plugin = Object.create(GameSearchPlugin.prototype);
+    plugin.settings = createSettings();
+    plugin.app = {
+      vault: {
+        adapter: {
+          exists: jest.fn().mockResolvedValue(false),
+          mkdir: jest.fn().mockResolvedValue(undefined),
+          writeBinary: jest.fn().mockResolvedValue(undefined),
+        },
+      },
+      metadataCache: {},
+    };
+  });
+
+  it('writes a fresh file to the requested path', async () => {
+    const result = await plugin.downloadAndSaveImage(
+      'cover.jpg',
+      'assets/covers',
+      'https://images.igdb.com/x/cover.jpg',
+    );
+
+    expect(result).toBe('assets/covers/cover.jpg');
+    expect(plugin.app.vault.adapter.writeBinary).toHaveBeenCalledTimes(1);
+    expect(plugin.app.vault.adapter.writeBinary).toHaveBeenCalledWith(
+      'assets/covers/cover.jpg',
+      expect.any(ArrayBuffer),
+    );
+  });
+
+  it('picks a suffixed path when the file already exists', async () => {
+    plugin.app.vault.adapter.exists.mockImplementation(async (p: string) => p.endsWith('cover.jpg'));
+
+    const result = await plugin.downloadAndSaveImage(
+      'cover.jpg',
+      'assets/covers',
+      'https://images.igdb.com/x/cover.jpg',
+    );
+
+    expect(result).toBe('assets/covers/cover-2.jpg');
+    expect(plugin.app.vault.adapter.writeBinary).toHaveBeenCalledWith(
+      'assets/covers/cover-2.jpg',
+      expect.any(ArrayBuffer),
+    );
+  });
+
+  it('keeps incrementing the suffix through multiple collisions', async () => {
+    plugin.app.vault.adapter.exists.mockImplementation(
+      async (p: string) => p.endsWith('cover.jpg') || p.endsWith('cover-2.jpg'),
+    );
+
+    const result = await plugin.downloadAndSaveImage(
+      'cover.jpg',
+      'assets/covers',
+      'https://images.igdb.com/x/cover.jpg',
+    );
+
+    expect(result).toBe('assets/covers/cover-3.jpg');
+  });
+
+  it('resolves names without an extension', async () => {
+    plugin.app.vault.adapter.exists.mockImplementation(async (p: string) => p.endsWith('cover'));
+
+    const result = await plugin.downloadAndSaveImage('cover', 'assets', 'https://images.igdb.com/x/cover.jpg');
+
+    expect(result).toBe('assets/cover-2');
+  });
+
+  it('returns an empty string and skips the write when the download fails', async () => {
+    mockRequestUrl.mockRejectedValue(new Error('network down'));
+
+    const result = await plugin.downloadAndSaveImage(
+      'cover.jpg',
+      'assets/covers',
+      'https://images.igdb.com/x/cover.jpg',
+    );
+
+    expect(result).toBe('');
+    expect(plugin.app.vault.adapter.writeBinary).not.toHaveBeenCalled();
   });
 });

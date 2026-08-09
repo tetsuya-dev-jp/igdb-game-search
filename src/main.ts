@@ -175,13 +175,29 @@ export default class GameSearchPlugin extends Plugin {
       const imageData = response.arrayBuffer;
       const normalizedDirectory = normalizePath(directory);
       await this.ensureDirectory(normalizedDirectory);
-      const filePath = normalizedDirectory ? `${normalizedDirectory}/${imageName}` : imageName;
+      const filePath = await this.resolveUniquePath(normalizedDirectory, imageName);
       await this.app.vault.adapter.writeBinary(filePath, imageData);
       return filePath;
     } catch (error) {
       console.error('Error downloading or saving image:', error);
       return '';
     }
+  }
+
+  private async resolveUniquePath(directory: string, fileName: string): Promise<string> {
+    const base = normalizePath(directory);
+    const dotIndex = fileName.lastIndexOf('.');
+    const stem = dotIndex > 0 ? fileName.slice(0, dotIndex) : fileName;
+    const ext = dotIndex > 0 ? fileName.slice(dotIndex) : '';
+    let candidate = base ? `${base}/${fileName}` : fileName;
+    let index = 2;
+
+    while (await this.app.vault.adapter.exists(candidate)) {
+      candidate = base ? `${base}/${stem}-${index}${ext}` : `${stem}-${index}${ext}`;
+      index += 1;
+    }
+
+    return candidate;
   }
 
   private async downloadAndSaveImages(imageUrls: string[], directory: string): Promise<string[]> {
