@@ -18,6 +18,19 @@ contract, and the no-credentials modal path fails with the expected error.
 
 ## Usage
 
+**Windows (real desktop Obsidian — recommended)**: the most faithful
+environment. Drives the REAL suggest-modal selection, which the Linux/xvfb
+path cannot (Obsidian 1.13.4 segfaults there). Your Obsidian must be closed
+first (single-instance app). A throwaway test vault is created in
+`AppData\Local\Temp\igdb-e2e-vault` and removed afterwards; your real vault
+is never touched.
+
+```bash
+bash e2e/run-windows.sh                 # requires Obsidian closed; Windows user kurok (E2E_WIN_USER to override)
+```
+
+**Linux (xvfb)**:
+
 ```bash
 bash e2e/run.sh            # full suite; exit 0 = all checks passed
 E2E_SHOTS=1 bash e2e/run.sh    # also write a screenshot to e2e/.cache/shots/
@@ -29,23 +42,20 @@ environment variables; the driver injects them into the plugin settings at
 runtime and the test is skipped (exit 0) when they are absent:
 
 ```bash
-TWITCH_CLIENT_ID=your-id TWITCH_CLIENT_SECRET=your-secret bash e2e/run.sh
+TWITCH_CLIENT_ID=your-id TWITCH_CLIENT_SECRET=your-secret bash e2e/run-windows.sh
 ```
 
-With credentials, test 6 runs a live end-to-end flow: search "metroid" on
-IGDB through the real search modal → take the first real result → run the
-plugin's render pipeline (cover image download included) → create the note in
-the vault → verify the note's frontmatter and the cover file on disk → delete
-everything again so re-runs stay idempotent. Credentials never touch the repo;
-they live in the shell environment only.
+With credentials, test 6 runs a live end-to-end flow: `createNewGameNote()`
+(the real ribbon flow) → search modal (query typed in) → live IGDB search →
+**real suggest-modal selection** (Windows) → note + cover image created in the
+vault → frontmatter + cover verified on disk → everything deleted again so
+re-runs stay idempotent. Credentials never touch the repo; they live in the
+shell environment only.
 
-Note: test 6 deliberately skips the plugin's *suggest modal* (the result-picker
-UI). Obsidian 1.13.4 segfaults (SIGSEGV, signal 11) when the plugin's
-SuggestModal opens or a suggestion is selected under xvfb/WSL2 — reproduced
-standalone with a trivial fake game, no network and no note creation involved.
-It is a native Obsidian bug in this environment, not plugin logic; the
-selection step is simulated by feeding the first real search result straight
-into the plugin's render + creation pipeline.
+On Linux (xvfb) the suggest modal is bypassed (native SIGSEGV under xvfb,
+reproduced standalone with a trivial fake game — Obsidian bug, not plugin
+logic): the first real search result is fed straight into the plugin's render
++ creation pipeline instead.
 
 First run downloads the latest Obsidian AppImage (~140 MB) into
 `e2e/.cache/`; later runs reuse the cache. A second consecutive run must also
@@ -63,7 +73,7 @@ node e2e/driver.mjs        # expects CDP on 127.0.0.1:9222 (E2E_CDP_PORT)
 1. The app opens the test vault (`e2e/.vault`, registered in
    `~/.config/obsidian/obsidian.json`).
 2. The plugin instance loads (clicking the first-run vault-trust dialog
-   "Trust author and enable plugins" when present).
+   when present — handled in the Obsidian UI's own language, en/ja/ko).
 3. Both commands are registered (`open-game-search-modal`,
    `open-game-search-modal-to-insert`).
 4. `getRenderedContents` matches the unit-tested frontmatter contract:
@@ -72,10 +82,23 @@ node e2e/driver.mjs        # expects CDP on 127.0.0.1:9222 (E2E_CDP_PORT)
 5. With no Twitch credentials configured, the search modal's flow promise
    rejects with `ConfigurationError` mentioning Twitch.
 6. With `TWITCH_CLIENT_ID`/`TWITCH_CLIENT_SECRET` set: live happy path —
-   real IGDB search, suggestion selection, note + cover creation in the
-   vault, verification of the created files, then cleanup.
+   real IGDB search, suggestion selection (real suggest-modal on Windows),
+   note + cover creation in the vault, verification of the created files,
+   then cleanup.
 
 ## Troubleshooting
+
+- **Windows run fails with "Obsidian is running"**: close the app (Ctrl+Q)
+  and re-run — Obsidian is single-instance and ignores the debugging flag
+  when already running.
+- **Windows run leaves the app on the real vault**: the vault argument is
+  only honored together with the `obsidian.json` registration (the script
+  does both); never run the driver against a vault without registering it
+  first — the driver targets the vault whose NAME it was told, so an
+  unregistered launch may silently open the last-used vault instead.
+- **Windows UI language**: the driver matches dialogs/buttons in en/ja/ko
+  (the trust dialog and the plugin's own localized strings follow the
+  Obsidian UI language).
 
 - **Vault picker shows instead of the vault opening**: the vault is not
   registered in `~/.config/obsidian/obsidian.json`, or a stale SingletonLock
