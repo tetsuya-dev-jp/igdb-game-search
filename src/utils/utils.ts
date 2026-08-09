@@ -99,14 +99,17 @@ export function toStringFrontMatter(frontMatter: object): string {
   return Object.entries(frontMatter)
     .map(([key, value]) => {
       const newValue = value?.toString().trim() ?? '';
+      const emitLine = (line: string): string => {
+        if (/:\s/.test(line)) {
+          return `${key}: "${line.replace(/"/g, '\\"')}"\n`;
+        }
+        return `${key}: ${line}\n`;
+      };
       if (/\r|\n/.test(newValue)) {
         // values containing newlines are truncated at the first newline
-        return `${key}: ${newValue.split(/\r|\n/)[0].trim()}\n`;
+        return emitLine(newValue.split(/\r|\n/)[0].trim());
       }
-      if (/:\s/.test(newValue)) {
-        return `${key}: "${newValue.replace(/"/g, '\\"')}"\n`;
-      }
-      return `${key}: ${newValue}\n`;
+      return emitLine(newValue);
     })
     .join('')
     .trim();

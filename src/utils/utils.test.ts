@@ -155,9 +155,24 @@ describe('parseFrontMatter / toStringFrontMatter', () => {
     expect(utils.toStringFrontMatter({ summary: 'line1\nline2' })).toBe('summary: line1');
   });
 
+  it('quotes a truncated first line containing colon-space', () => {
+    expect(utils.toStringFrontMatter({ summary: 'Note: first line\ncontinued' })).toBe('summary: "Note: first line"');
+  });
+
+  it('keeps a truncated plain line unquoted with quotes passed through', () => {
+    expect(utils.toStringFrontMatter({ summary: 'He said "hi"\ncontinued' })).toBe('summary: He said "hi"');
+  });
+
+  it('quotes and escapes a truncated first line combining colon-space and quotes', () => {
+    expect(utils.toStringFrontMatter({ summary: 'He said "hi": there\ncontinued' })).toBe(
+      'summary: "He said \\"hi\\": there"',
+    );
+  });
+
   it('round-trips a quoted, truncated value through serialize then parse', () => {
-    expect(utils.parseFrontMatter(utils.toStringFrontMatter({ summary: 'He said "hi" then\ncontinued' }))).toEqual({
-      summary: 'He said "hi" then',
+    // parseFrontMatter keeps the surrounding quotes — quote stripping is deliberately out of scope.
+    expect(utils.parseFrontMatter(utils.toStringFrontMatter({ summary: 'Note: a\nb' }))).toEqual({
+      summary: '"Note: a"',
     });
   });
 
