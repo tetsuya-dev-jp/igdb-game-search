@@ -147,20 +147,22 @@ describe('parseFrontMatter / toStringFrontMatter', () => {
     expect(utils.toStringFrontMatter({ summary: 'He said "hi" there' })).toBe('summary: He said "hi" there');
   });
 
-  it('serializes quotes inside quoted values as the literal &quot; entity', () => {
-    // CURRENT (buggy) behavior — plan 007 changes this (YAML does not process HTML entities).
-    expect(utils.toStringFrontMatter({ summary: 'He said "hi": there' })).toBe(
-      'summary: "He said &quot;hi&quot;: there"',
-    );
+  it('escapes quotes inside quoted values with backslash', () => {
+    expect(utils.toStringFrontMatter({ summary: 'He said "hi": there' })).toBe('summary: "He said \\"hi\\": there"');
   });
 
-  it('drops the whole key when the value contains a newline', () => {
-    // CURRENT (buggy) behavior — plan 007 changes this (silent data loss).
-    expect(utils.toStringFrontMatter({ summary: 'line1\nline2' })).toBe('');
+  it('truncates the value at the first newline instead of dropping the key', () => {
+    expect(utils.toStringFrontMatter({ summary: 'line1\nline2' })).toBe('summary: line1');
+  });
+
+  it('round-trips a quoted, truncated value through serialize then parse', () => {
+    expect(utils.parseFrontMatter(utils.toStringFrontMatter({ summary: 'He said "hi" then\ncontinued' }))).toEqual({
+      summary: 'He said "hi" then',
+    });
   });
 
   it('treats a comment line as a key with an empty value', () => {
-    // behavior to revisit in plan 007.
+    // parseFrontMatter behavior deliberately unchanged — plan 007 only touched serialization and substitution.
     expect(utils.parseFrontMatter('# foo')).toEqual({ '# foo': '' });
   });
 });
@@ -170,18 +172,21 @@ describe('replaceVariableSyntax', () => {
     expect(utils.replaceVariableSyntax({ title: 'X' }, '{{title}}')).toBe('X');
   });
 
-  it('strips unknown placeholders', () => {
-    // CURRENT (buggy) behavior — plan 007 changes this (user template syntax is deleted).
-    expect(utils.replaceVariableSyntax({ title: 'X' }, 'a {{nonexistent}} b')).toBe('a  b');
+  it('preserves unknown placeholders (user template syntax)', () => {
+    expect(utils.replaceVariableSyntax({ title: 'X' }, 'a {{nonexistent}} b')).toBe('a {{nonexistent}} b');
   });
 
   it('leaves text without placeholders unchanged', () => {
     expect(utils.replaceVariableSyntax({ title: 'X' }, 'plain text')).toBe('plain text');
   });
 
-  it('interprets $ patterns in values as String.replace metacharacters', () => {
-    // CURRENT (buggy) behavior — plan 007 changes this ($\' is expanded by String.replace).
-    expect(utils.replaceVariableSyntax({ title: "Toy $' Story" }, '{{title}}')).toBe('Toy  Story');
+  it('treats $ patterns in values literally', () => {
+    expect(utils.replaceVariableSyntax({ title: "Toy $' Story" }, '{{title}}')).toBe("Toy $' Story");
+    expect(utils.replaceVariableSyntax({ title: 'A $& B $$ C' }, '{{title}}')).toBe('A $& B $$ C');
+  });
+
+  it('replaces known placeholders with empty values, leaving nothing dangling', () => {
+    expect(utils.replaceVariableSyntax({ title: 'X', summary: '' }, '{{summary}}|{{title}}')).toBe('|X');
   });
 
   it('returns an empty string for empty or whitespace-only text', () => {
@@ -236,7 +241,7 @@ describe('replaceDateInString / getDate', () => {
     expect(utils.replaceDateInString('{{DATE+1}}')).toBe('2026-01-16');
     // Plan 003 expected {{DATE-2}} support, but the regex requires a literal `+`
     // (DATE_REGEX: /{{DATE(\+-?[0-9]+)?}}/), so a bare `-` offset is left untouched.
-    // CURRENT behavior — revisit in plan 007 if negative offsets should work.
+    // Deliberately unchanged — negative-offset date handling is out of plan 007 scope.
     expect(utils.replaceDateInString('{{DATE-2}}')).toBe('{{DATE-2}}');
   });
 

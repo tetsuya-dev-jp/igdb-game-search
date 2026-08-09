@@ -59,11 +59,19 @@ export function replaceVariableSyntax(game: GameEntry, text: string): string {
   }
 
   const entries = Object.entries(game);
+  const keys = Object.keys(game);
+  const substituted = entries.reduce(
+    (result, [key, val = '']) => result.replace(new RegExp(`{{${key}}}`, 'ig'), () => String(val ?? '')),
+    text,
+  );
 
-  return entries
-    .reduce((result, [key, val = '']) => result.replace(new RegExp(`{{${key}}}`, 'ig'), String(val)), text)
-    .replace(/{{\w+}}/gi, '')
-    .trim();
+  // Strip only known GameEntry placeholders that failed to substitute (empty values);
+  // unknown {{word}} placeholders (user template syntax) are preserved verbatim.
+  if (!keys.length) {
+    return substituted.trim();
+  }
+
+  return substituted.replace(new RegExp(`{{(?:${keys.join('|')})}}`, 'ig'), '').trim();
 }
 
 export function camelToSnakeCase(str) {
@@ -95,10 +103,11 @@ export function toStringFrontMatter(frontMatter: object): string {
     .map(([key, value]) => {
       const newValue = value?.toString().trim() ?? '';
       if (/\r|\n/.test(newValue)) {
-        return '';
+        // values containing newlines are truncated at the first newline
+        return `${key}: ${newValue.split(/\r|\n/)[0].trim()}\n`;
       }
       if (/:\s/.test(newValue)) {
-        return `${key}: "${newValue.replace(/"/g, '&quot;')}"\n`;
+        return `${key}: "${newValue.replace(/"/g, '\\"')}"\n`;
       }
       return `${key}: ${newValue}\n`;
     })
