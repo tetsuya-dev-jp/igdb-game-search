@@ -381,6 +381,158 @@ async function main() {
     }
   });
 
+  // Test 6 (optional): happy path with real credentials. Skipped unless
+  // TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are set. Covers: credential
+  // injection through the real settings path, live IGDB search, suggestion
+  // selection, cover-image download, vault file creation, and cleanup.
+  await test('6: full note creation with real IGDB credentials', async () => {
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      console.log('SKIP 6: set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET to run the happy-path test');
+      return;
+    }
+
+    // Inject credentials + enable cover-image saving through the real settings path.
+    await session.evaluate(`(() => {
+      const plugin = app.plugins.plugins['igdb-game-search'];
+      plugin.settings.twitchClientId = ${JSON.stringify(clientId)};
+      plugin.settings.twitchClientSecret = ${JSON.stringify(clientSecret)};
+      plugin.settings.enableCoverImageSave = true;
+      plugin.settings.coverImagePath = '';
+      plugin.settings.folder = '';
+      return plugin.saveSettings();
+    })()`);
+
+    const before = await session.evaluate(`app.vault.getFiles().map(f => f.path)`);
+    const beforeSet = new Set(before);
+
+    // Open the search modal; the flow promise only settles after the Search click.
+    await session.evaluate(`(() => {
+      window.__e2eCreate = 'opening';
+      const plugin = app.plugins.plugins['igdb-game-search'];
+      plugin.searchGameMetadata('metroid').then(
+        () => { window.__e2eCreate = 'resolved'; },
+        (err) => { window.__e2eCreate = 'rejected: ' + (err && err.name) + ': ' + (err && err.message); },
+      );
+      return true;
+    })()`);
+
+    // Click Search in the plugin modal (content-scoped, mirrors test 5).
+    const clickSearchIn = async () => {
+      const targets = await listTargets();
+      const pageTargets = [
+        target,
+        ...targets.filter(t => t.type === 'page' && t.url.startsWith('app://') && t.id !== target.id),
+        ...targets.filter(t => t.type === 'page' && t.url.startsWith('about:blank')),
+      ];
+      for (const t of pageTargets) {
+        let s;
+        try {
+          s = t.webSocketDebuggerUrl === target.webSocketDebuggerUrl ? session : await connectTarget(t);
+        } catch {
+          continue;
+        }
+        try {
+          const probe = await s.evaluate(`(() => {
+            const containers = [...document.querySelectorAll('.modal-container')]
+              .filter(c => c.innerText.includes('Search game'));
+            if (!containers.length) return { found: false };
+            const btn = [...containers[containers.length - 1].querySelectorAll('button')]
+              .find(b => b.textContent.trim() === 'Search');
+            if (!btn) return { found: false };
+            btn.click();
+            return { found: true };
+          })()`);
+          if (probe.found) return true;
+        } finally {
+          if (s !== session) s.close();
+        }
+      }
+      return false;
+    };
+
+    // Wait for the search modal to actually render, then click Search.
+    await poll(
+      session,
+      `(() => {
+        const containers = [...document.querySelectorAll('.modal-container')]
+          .filter(c => c.innerText.includes('Search game'));
+        return containers.length > 0;
+      })()`,
+      15000,
+      'search modal to open',
+    );
+    // If it already settled (early error), surface it.
+    const early = await session.evaluate(`window.__e2eCreate`);
+    if (early !== 'opening') {
+      throw new Error(`flow settled before Search was clicked: ${early}`);
+    }
+    if (!(await clickSearchIn())) {
+      throw new Error('search modal button not found in any window DOM');
+    }
+
+    // Wait for the suggest modal, then click its first suggestion.
+    await poll(
+      session,
+      `(() => {
+        const items = [...document.querySelectorAll('.suggestion-item')];
+        if (!items.length) return false;
+        items[0].click();
+        return true;
+      })()`,
+      30000,
+      'suggest modal with results (live IGDB search)',
+    );
+
+    // Note + cover are created asynchronously; wait for the new files.
+    const added = await poll(
+      session,
+      `(() => {
+        const now = app.vault.getFiles().map(f => f.path);
+        const added = now.filter(p => !${JSON.stringify([...beforeSet])}.includes(p));
+        return added.length ? added : null;
+      })()`,
+      45000,
+      'note file to be created (search + token + cover download)',
+    );
+
+    const notePath = added.find(p => p.endsWith('.md'));
+    if (!notePath) {
+      throw new Error(`no .md file created; new files: ${JSON.stringify(added)}`);
+    }
+    const content = await session.evaluate(
+      `app.vault.cachedRead(app.vault.getAbstractFileByPath(${JSON.stringify(notePath)}))`,
+    );
+    if (!content.startsWith('---\n')) {
+      throw new Error(`note does not start with frontmatter: ${JSON.stringify(content.slice(0, 120))}`);
+    }
+    const titleMatch = content.match(/^title: (.+)$/m);
+    if (!titleMatch || !titleMatch[1].trim()) {
+      throw new Error(`note frontmatter missing a title: ${JSON.stringify(content.slice(0, 200))}`);
+    }
+
+    const coverPath = added.find(p => p.endsWith('.jpg'));
+    if (!coverPath) {
+      throw new Error(`cover image was not saved (enableCoverImageSave on); new files: ${JSON.stringify(added)}`);
+    }
+    console.log(`   (created ${notePath} with cover ${coverPath} — title "${titleMatch[1].trim()}")`);
+
+    // Cleanup: delete everything this test created so re-runs stay idempotent.
+    await session.evaluate(`(async () => {
+      for (const p of ${JSON.stringify(added)}) {
+        const f = app.vault.getAbstractFileByPath(p);
+        if (f) await app.vault.delete(f);
+      }
+      return true;
+    })()`);
+    const after = await session.evaluate(`app.vault.getFiles().map(f => f.path)`);
+    const leftovers = after.filter(p => !beforeSet.has(p));
+    if (leftovers.length) {
+      throw new Error(`cleanup left files behind: ${JSON.stringify(leftovers)}`);
+    }
+  });
+
   // Optional screenshot for manual inspection.
   if (SHOTS) {
     const fs = await import('node:fs');

@@ -24,6 +24,20 @@ E2E_SHOTS=1 bash e2e/run.sh    # also write a screenshot to e2e/.cache/shots/
 E2E_CDP_PORT=9333 bash e2e/run.sh  # override the CDP port (default 9222)
 ```
 
+**Happy-path test (test 6)**: needs real IGDB credentials. Provide them as
+environment variables; the driver injects them into the plugin settings at
+runtime and the test is skipped (exit 0) when they are absent:
+
+```bash
+TWITCH_CLIENT_ID=your-id TWITCH_CLIENT_SECRET=your-secret bash e2e/run.sh
+```
+
+With credentials, test 6 runs a live end-to-end flow: search "metroid" on
+IGDB → click the first suggestion → the note is created in the vault with
+frontmatter, the cover image is downloaded, both are verified on disk, then
+deleted again so re-runs stay idempotent. Credentials never touch the repo;
+they live in the shell environment only.
+
 First run downloads the latest Obsidian AppImage (~140 MB) into
 `e2e/.cache/`; later runs reuse the cache. A second consecutive run must also
 pass (idempotent: cache hit, no duplicate vault registrations, no stale-lock
@@ -48,6 +62,9 @@ node e2e/driver.mjs        # expects CDP on 127.0.0.1:9222 (E2E_CDP_PORT)
    literally, values truncated at the first newline, no HTML entities.
 5. With no Twitch credentials configured, the search modal's flow promise
    rejects with `ConfigurationError` mentioning Twitch.
+6. With `TWITCH_CLIENT_ID`/`TWITCH_CLIENT_SECRET` set: live happy path —
+   real IGDB search, suggestion selection, note + cover creation in the
+   vault, verification of the created files, then cleanup.
 
 ## Troubleshooting
 
