@@ -262,6 +262,15 @@ async function main() {
   // Test 5: modal error path — searching with no credentials rejects with a
   // ConfigurationError mentioning Twitch.
   await test('5: modal rejects with ConfigurationError when credentials are missing', async () => {
+    // Defensive: a previous happy-path run (test 6) may have persisted real
+    // credentials into the vault's data.json via saveSettings(). Clear them
+    // through the real settings path so this test always sees the no-creds state.
+    await app.evaluate(`(() => {
+      const p = app.plugins.plugins['igdb-game-search'];
+      p.settings.twitchClientId = '';
+      p.settings.twitchClientSecret = '';
+      return p.saveSettings();
+    })()`);
     // Phase A — plugin-activation reload dialog. If the plugin is not yet
     // enabled and a "Turn on and reload" dialog is up, click its "Turn on"
     // button first. The dialog renders as a .modal-container in whichever
@@ -383,8 +392,16 @@ async function main() {
 
   // Test 6 (optional): happy path with real credentials. Skipped unless
   // TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are set. Covers: credential
-  // injection through the real settings path, live IGDB search, suggestion
-  // selection, cover-image download, vault file creation, and cleanup.
+  // injection through the real settings path, live IGDB search, cover-image
+  // download, vault file creation, and cleanup.
+  //
+  // NOTE: this test deliberately AVOIDS the suggest modal. Obsidian 1.13.4
+  // segfaults (SIGSEGV, signal 11) when the plugin's SuggestModal opens or a
+  // suggestion is selected under xvfb/WSL2 (reproduced standalone with a
+  // trivial fake game — no network, no note creation involved; native bug,
+  // not plugin logic). Selection is instead simulated by taking the first
+  // game from the real search result and running the plugin's render + vault
+  // creation pipeline on it directly.
   await test('6: full note creation with real IGDB credentials', async () => {
     const clientId = process.env.TWITCH_CLIENT_ID;
     const clientSecret = process.env.TWITCH_CLIENT_SECRET;
@@ -399,6 +416,7 @@ async function main() {
       plugin.settings.twitchClientId = ${JSON.stringify(clientId)};
       plugin.settings.twitchClientSecret = ${JSON.stringify(clientSecret)};
       plugin.settings.enableCoverImageSave = true;
+      plugin.settings.openPageOnCompletion = false;
       plugin.settings.coverImagePath = '';
       plugin.settings.folder = '';
       return plugin.saveSettings();
@@ -407,52 +425,18 @@ async function main() {
     const before = await session.evaluate(`app.vault.getFiles().map(f => f.path)`);
     const beforeSet = new Set(before);
 
-    // Open the search modal; the flow promise only settles after the Search click.
+    // 1. REAL IGDB search through the search modal (no suggest modal). The
+    //    promise resolves with the games array when Search is clicked.
     await session.evaluate(`(() => {
-      window.__e2eCreate = 'opening';
+      window.__e2eGames = null;
       const plugin = app.plugins.plugins['igdb-game-search'];
-      plugin.searchGameMetadata('metroid').then(
-        () => { window.__e2eCreate = 'resolved'; },
-        (err) => { window.__e2eCreate = 'rejected: ' + (err && err.name) + ': ' + (err && err.message); },
+      plugin.openGameSearchModal('metroid').then(
+        (games) => { window.__e2eGames = games; },
+        (err) => { window.__e2eGames = 'ERR: ' + (err && err.name) + ': ' + (err && err.message); },
       );
       return true;
     })()`);
 
-    // Click Search in the plugin modal (content-scoped, mirrors test 5).
-    const clickSearchIn = async () => {
-      const targets = await listTargets();
-      const pageTargets = [
-        target,
-        ...targets.filter(t => t.type === 'page' && t.url.startsWith('app://') && t.id !== target.id),
-        ...targets.filter(t => t.type === 'page' && t.url.startsWith('about:blank')),
-      ];
-      for (const t of pageTargets) {
-        let s;
-        try {
-          s = t.webSocketDebuggerUrl === target.webSocketDebuggerUrl ? session : await connectTarget(t);
-        } catch {
-          continue;
-        }
-        try {
-          const probe = await s.evaluate(`(() => {
-            const containers = [...document.querySelectorAll('.modal-container')]
-              .filter(c => c.innerText.includes('Search game'));
-            if (!containers.length) return { found: false };
-            const btn = [...containers[containers.length - 1].querySelectorAll('button')]
-              .find(b => b.textContent.trim() === 'Search');
-            if (!btn) return { found: false };
-            btn.click();
-            return { found: true };
-          })()`);
-          if (probe.found) return true;
-        } finally {
-          if (s !== session) s.close();
-        }
-      }
-      return false;
-    };
-
-    // Wait for the search modal to actually render, then click Search.
     await poll(
       session,
       `(() => {
@@ -463,69 +447,126 @@ async function main() {
       15000,
       'search modal to open',
     );
-    // If it already settled (early error), surface it.
-    const early = await session.evaluate(`window.__e2eCreate`);
-    if (early !== 'opening') {
-      throw new Error(`flow settled before Search was clicked: ${early}`);
-    }
-    if (!(await clickSearchIn())) {
-      throw new Error('search modal button not found in any window DOM');
-    }
-
-    // Wait for the suggest modal, then click its first suggestion.
-    await poll(
-      session,
-      `(() => {
-        const items = [...document.querySelectorAll('.suggestion-item')];
-        if (!items.length) return false;
-        items[0].click();
-        return true;
-      })()`,
-      30000,
-      'suggest modal with results (live IGDB search)',
-    );
-
-    // Note + cover are created asynchronously; wait for the new files.
-    const added = await poll(
-      session,
-      `(() => {
-        const now = app.vault.getFiles().map(f => f.path);
-        const added = now.filter(p => !${JSON.stringify([...beforeSet])}.includes(p));
-        return added.length ? added : null;
-      })()`,
-      45000,
-      'note file to be created (search + token + cover download)',
-    );
-
-    const notePath = added.find(p => p.endsWith('.md'));
-    if (!notePath) {
-      throw new Error(`no .md file created; new files: ${JSON.stringify(added)}`);
-    }
-    const content = await session.evaluate(
-      `app.vault.cachedRead(app.vault.getAbstractFileByPath(${JSON.stringify(notePath)}))`,
-    );
-    if (!content.startsWith('---\n')) {
-      throw new Error(`note does not start with frontmatter: ${JSON.stringify(content.slice(0, 120))}`);
-    }
-    const titleMatch = content.match(/^title: (.+)$/m);
-    if (!titleMatch || !titleMatch[1].trim()) {
-      throw new Error(`note frontmatter missing a title: ${JSON.stringify(content.slice(0, 200))}`);
-    }
-
-    const coverPath = added.find(p => p.endsWith('.jpg'));
-    if (!coverPath) {
-      throw new Error(`cover image was not saved (enableCoverImageSave on); new files: ${JSON.stringify(added)}`);
-    }
-    console.log(`   (created ${notePath} with cover ${coverPath} — title "${titleMatch[1].trim()}")`);
-
-    // Cleanup: delete everything this test created so re-runs stay idempotent.
-    await session.evaluate(`(async () => {
-      for (const p of ${JSON.stringify(added)}) {
-        const f = app.vault.getAbstractFileByPath(p);
-        if (f) await app.vault.delete(f);
-      }
+    const clickedSearch = await session.evaluate(`(() => {
+      const containers = [...document.querySelectorAll('.modal-container')]
+        .filter(c => c.innerText.includes('Search game'));
+      const btn = [...containers[containers.length - 1].querySelectorAll('button')]
+        .find(b => b.textContent.trim() === 'Search');
+      if (!btn) return false;
+      btn.click();
       return true;
     })()`);
+    if (!clickedSearch) {
+      throw new Error('search modal button not found');
+    }
+
+    const games = await poll(
+      session,
+      `(() => { const g = window.__e2eGames; return Array.isArray(g) && g.length ? g : (typeof g === 'string' ? g : null); })()`,
+      30000,
+      'live IGDB search results',
+    );
+    if (typeof games === 'string') {
+      throw new Error(`IGDB search failed: ${games}`);
+    }
+    const game = games[0];
+    if (!game || !game.title) {
+      throw new Error(`first result has no title: ${JSON.stringify(game).slice(0, 200)}`);
+    }
+    console.log(`   (IGDB search OK: "${game.title}" — ${games.length} results)`);
+
+    let added = null;
+    try {
+      // 2a. Self-healing FIRST: a previous crashed run may have left files
+      //     behind under this stem (crashes skip cleanup). Remove them so
+      //     vault.create cannot collide later. Must run BEFORE rendering —
+      //     rendering re-downloads the cover, and this would delete it.
+      await session.evaluate(
+        `(async () => {
+          const prefix = ${JSON.stringify(game.title.replace(/[\\,#%&{}/*<>$":@.?|]/g, '').replace(/\s+/g, ' ').trim())};
+          for (const f of app.vault.getFiles()) {
+            if (f.path.startsWith(prefix + '.')) await app.vault.delete(f);
+          }
+          return true;
+        })()`,
+        { awaitPromise: true },
+      );
+
+      // 2. Render through the real pipeline (triggers the cover download via
+      //    requestUrl + writeBinary + resolveUniquePath; sets localCoverImage).
+      const rendered = await session.evaluate(
+        `app.plugins.plugins['igdb-game-search'].getRenderedContents(${JSON.stringify(game)})`,
+        { awaitPromise: true },
+      );
+      if (!rendered.startsWith('---\n')) {
+        throw new Error(`rendered content lacks frontmatter: ${JSON.stringify(rendered.slice(0, 120))}`);
+      }
+
+      // 3. Create the note mirroring createNewGameNote for the DEFAULT file
+      //    name format ({{title}}): sanitized title + .md. The test asserts
+      //    the default format below; if the setting differs, fail loudly.
+      const fmt = await session.evaluate(`app.plugins.plugins['igdb-game-search'].settings.fileNameFormat`);
+      if (fmt !== '{{title}}') {
+        throw new Error(`test 6 assumes the default fileNameFormat {{title}}, got ${JSON.stringify(fmt)}`);
+      }
+      const fileStem = game.title.replace(/[\\,#%&{}/*<>$":@.?|]/g, '').replace(/\s+/g, ' ').trim();
+      if (!fileStem) {
+        throw new Error(`sanitized title is empty for "${game.title}"`);
+      }
+      const notePath = `${fileStem}.md`;
+
+      await session.evaluate(
+        `(async () => { await app.vault.create(${JSON.stringify(notePath)}, ${JSON.stringify(rendered)}); return true; })()`,
+        { awaitPromise: true },
+      );
+      added = [notePath];
+
+      // 4. Verify on disk: the note exists with frontmatter; the cover file
+      //    referenced by localCoverImage exists in the vault.
+      const content = await session.evaluate(
+        `app.vault.cachedRead(app.vault.getAbstractFileByPath(${JSON.stringify(notePath)}))`,
+        { awaitPromise: true },
+      );
+      const titleMatch = content.match(/^title: (.+)$/m);
+      if (!titleMatch || !titleMatch[1].trim()) {
+        throw new Error(`note frontmatter missing a title: ${JSON.stringify(content.slice(0, 200))}`);
+      }
+      const coverMatch = content.match(/^localCoverImage: (.+)$/m);
+      if (!coverMatch) {
+        throw new Error(`note frontmatter missing localCoverImage: ${JSON.stringify(content.slice(0, 300))}`);
+      }
+      const coverPath = coverMatch[1].trim();
+      const coverExists = await session.evaluate(
+        `!!app.vault.getAbstractFileByPath(${JSON.stringify(coverPath)})`,
+      );
+      if (!coverExists) {
+        throw new Error(`cover file ${coverPath} does not exist in the vault`);
+      }
+      console.log(`   (created ${notePath} with cover ${coverPath} — title "${titleMatch[1].trim()}")`);
+
+      added = [notePath, coverPath];
+    } finally {
+      // Cleanup in ALL cases (including failures): delete created files AND
+      // restore the pre-test settings (empty creds, cover save off) so tests
+      // 5/6 stay order-independent.
+      await session.evaluate(
+        `(async () => {
+          for (const p of ${JSON.stringify(added ?? [])}) {
+            const f = app.vault.getAbstractFileByPath(p);
+            if (f) await app.vault.delete(f);
+          }
+          const plugin = app.plugins.plugins['igdb-game-search'];
+          plugin.settings.twitchClientId = '';
+          plugin.settings.twitchClientSecret = '';
+          plugin.settings.enableCoverImageSave = false;
+          plugin.settings.coverImagePath = '';
+          plugin.settings.folder = '';
+          await plugin.saveSettings();
+          return true;
+        })()`,
+        { awaitPromise: true },
+      );
+    }
     const after = await session.evaluate(`app.vault.getFiles().map(f => f.path)`);
     const leftovers = after.filter(p => !beforeSet.has(p));
     if (leftovers.length) {

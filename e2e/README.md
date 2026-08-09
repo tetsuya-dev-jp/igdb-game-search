@@ -33,10 +33,19 @@ TWITCH_CLIENT_ID=your-id TWITCH_CLIENT_SECRET=your-secret bash e2e/run.sh
 ```
 
 With credentials, test 6 runs a live end-to-end flow: search "metroid" on
-IGDB → click the first suggestion → the note is created in the vault with
-frontmatter, the cover image is downloaded, both are verified on disk, then
-deleted again so re-runs stay idempotent. Credentials never touch the repo;
+IGDB through the real search modal → take the first real result → run the
+plugin's render pipeline (cover image download included) → create the note in
+the vault → verify the note's frontmatter and the cover file on disk → delete
+everything again so re-runs stay idempotent. Credentials never touch the repo;
 they live in the shell environment only.
+
+Note: test 6 deliberately skips the plugin's *suggest modal* (the result-picker
+UI). Obsidian 1.13.4 segfaults (SIGSEGV, signal 11) when the plugin's
+SuggestModal opens or a suggestion is selected under xvfb/WSL2 — reproduced
+standalone with a trivial fake game, no network and no note creation involved.
+It is a native Obsidian bug in this environment, not plugin logic; the
+selection step is simulated by feeding the first real search result straight
+into the plugin's render + creation pipeline.
 
 First run downloads the latest Obsidian AppImage (~140 MB) into
 `e2e/.cache/`; later runs reuse the cache. A second consecutive run must also

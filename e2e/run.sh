@@ -24,6 +24,7 @@ rm -f ~/.config/obsidian/DevToolsActivePort \
 
 xvfb-run -a -s "-screen 0 1280x800x24" "$OBSIDIAN_BIN" \
   --no-sandbox \
+  --disable-gpu \
   --remote-debugging-port="${E2E_CDP_PORT}" \
   e2e/.vault > e2e/.cache/obsidian.log 2>&1 &
 APP_PID=$!
