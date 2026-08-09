@@ -214,7 +214,7 @@ export default class GameSearchPlugin extends Plugin {
   }
 
   private async resolveUniquePath(directory: string, fileName: string): Promise<string> {
-    const base = normalizePath(directory);
+    const base = this.normalizeDirectory(directory);
     const dotIndex = fileName.lastIndexOf('.');
     const stem = dotIndex > 0 ? fileName.slice(0, dotIndex) : fileName;
     const ext = dotIndex > 0 ? fileName.slice(dotIndex) : '';

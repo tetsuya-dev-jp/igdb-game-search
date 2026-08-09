@@ -74,7 +74,9 @@ export class Setting {
   addSearch = jest.fn().mockReturnValue(this);
 }
 
-export const normalizePath = (p: string) => p.replace(/\/+/g, '/');
+// Faithful to real Obsidian: normalizePath('') returns '/' (root), which is
+// truthy — callers must guard the root case or they build '//' paths.
+export const normalizePath = (p: string) => (p === '' ? '/' : p.replace(/\/+/g, '/'));
 
 export class TextComponent {
   inputEl: HTMLInputElement;

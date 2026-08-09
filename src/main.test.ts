@@ -160,6 +160,19 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
     expect(result).toBe('assets/covers/cover-3.jpg');
   });
 
+  it('writes to a clean root path when the directory is empty (no double slash)', async () => {
+    plugin.app.vault.adapter.exists.mockResolvedValue(false);
+    plugin.app.vault.adapter.writeBinary.mockResolvedValue(undefined);
+    plugin.app.vault.adapter.readBinary.mockResolvedValue(new ArrayBuffer(8));
+
+    const result = await plugin.downloadAndSaveImage('cover.jpg', '', 'https://images.igdb.com/x/cover.jpg');
+
+    // Regression: real Obsidian normalizePath('') returns '/', which used to
+    // produce '//cover.jpg' — un-resolvable by vault.getAbstractFileByPath.
+    expect(result).toBe('cover.jpg');
+    expect(plugin.app.vault.adapter.writeBinary).toHaveBeenCalledWith('cover.jpg', expect.anything());
+  });
+
   it('writes to a clean path with no leading slash when directory is empty', async () => {
     const result = await plugin.downloadAndSaveImage('cover.jpg', '', 'https://images.igdb.com/x/cover.jpg');
 
