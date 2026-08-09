@@ -1,3 +1,5 @@
+import { detectLocale } from '@utils/i18n';
+
 export const AUTO_TRANSLATION_LANGUAGE = 'auto';
 
 export const DEEPL_TARGET_LANGUAGES: Record<string, string> = {
@@ -92,7 +94,7 @@ export function resolveTranslationTargetLanguage(preferredLanguage: string): str
     return DEEPL_TARGET_LANGUAGES[preferredLanguage] ? preferredLanguage : null;
   }
 
-  return mapLocaleToDeepLTargetLanguage(getCurrentLocale());
+  return mapLocaleToDeepLTargetLanguage(detectLocale());
 }
 
 export function isEnglishTargetLanguage(targetLanguage: string | null): boolean {
@@ -110,20 +112,4 @@ export function mapLocaleToDeepLTargetLanguage(locale: string): string | null {
     LOCALE_TO_DEEPL_TARGET_LANGUAGE[normalizedLocale.split('-')[0]] ??
     null
   );
-}
-
-function getCurrentLocale(): string {
-  const momentLocale = (
-    globalThis.window as (Window & { moment?: { locale?: () => string } }) | undefined
-  )?.moment?.locale?.();
-  if (typeof momentLocale === 'string' && momentLocale.trim()) {
-    return momentLocale;
-  }
-
-  const navigatorLocale = globalThis.navigator?.language;
-  if (typeof navigatorLocale === 'string' && navigatorLocale.trim()) {
-    return navigatorLocale;
-  }
-
-  return '';
 }
