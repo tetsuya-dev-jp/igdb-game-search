@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.3.0...0.4.0) (2026-08-09)
+
+
+### Bug Fixes
+
+* pass Obsidian community directory automated review ([222d7b4](https://github.com/tetsuya-dev-jp/igdb-game-search/commit/222d7b4c2938fb3334508b9ecad00bcf676f0860))
+
 ## [0.3.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.2.0...0.3.0) (2026-08-09)
 
 
