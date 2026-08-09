@@ -26,19 +26,17 @@ export function t(key: I18nKey, locale?: string): string {
 }
 
 export function detectLocale(): string {
-  const appLanguage = (globalThis as { getLanguage?: () => string }).getLanguage?.();
+  const appLanguage = (window as unknown as { getLanguage?: () => string }).getLanguage?.();
   if (typeof appLanguage === 'string' && appLanguage.trim()) {
     return appLanguage;
   }
 
-  const momentLocale = (
-    globalThis.window as (Window & { moment?: { locale?: () => string } }) | undefined
-  )?.moment?.locale?.();
+  const momentLocale = (window as Window & { moment?: { locale?: () => string } }).moment?.locale?.();
   if (typeof momentLocale === 'string' && momentLocale.trim()) {
     return momentLocale;
   }
 
-  const navigatorLocale = globalThis.navigator?.language;
+  const navigatorLocale = navigator?.language;
   if (typeof navigatorLocale === 'string' && navigatorLocale.trim()) {
     return navigatorLocale;
   }

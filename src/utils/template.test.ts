@@ -1,4 +1,5 @@
 import { applyTemplateTransformations } from './template';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 
 describe('applyTemplateTransformations', () => {
   interface MomentApi {
@@ -15,7 +16,7 @@ describe('applyTemplateTransformations', () => {
   let momentApi: MomentApi;
 
   beforeAll(() => {
-    const moment = (() => {
+    const moment = () => {
       const d = new Date('2026-01-15T12:00:00Z');
       momentApi = {
         add: (offset: number, unit: string) => {
@@ -34,7 +35,7 @@ describe('applyTemplateTransformations', () => {
             .replace('ss', String(d.getUTCSeconds()).padStart(2, '0')),
       };
       return momentApi;
-    }) as unknown as MomentStub;
+    };
     (window as unknown as { moment?: MomentStub }).moment = moment;
   });
 

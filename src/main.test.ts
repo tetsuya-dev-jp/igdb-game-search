@@ -1,16 +1,81 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test: plugin instance is assembled without onload, loose typing is intentional */
 import { GameEntry } from '@models/game.model';
 import GameSearchPlugin from './main';
 import { createSettings } from '../test/settings_fixture';
+import { GameSearchPluginSettings } from '@settings/settings';
+import { RequestUrlResponse, requestUrl, TFile } from 'obsidian';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 jest.mock('obsidian', () => ({
-  ...jest.requireActual('obsidian'),
+  ...jest.requireActual<typeof import('obsidian')>('obsidian'),
   requestUrl: jest.fn(),
 }));
 
-import { requestUrl } from 'obsidian';
+const mockRequestUrl = requestUrl as jest.MockedFunction<typeof requestUrl>;
 
-const mockRequestUrl = requestUrl as jest.Mock;
+interface TestVault {
+  cachedRead: jest.Mock<(file: TFile) => Promise<string>>;
+  getAbstractFileByPath: jest.Mock;
+  adapter: {
+    exists: jest.Mock<(path: string) => Promise<boolean>>;
+    mkdir: jest.Mock<(path: string) => Promise<void>>;
+    writeBinary: jest.Mock<(path: string, data: ArrayBuffer) => Promise<void>>;
+    readBinary: jest.Mock<(path: string) => Promise<ArrayBuffer>>;
+  };
+}
+
+interface TestApp {
+  vault: TestVault;
+  metadataCache: {
+    getFirstLinkpathDest: jest.Mock;
+  };
+}
+
+type TestPlugin = Omit<GameSearchPlugin, 'app' | 'settings'> & {
+  settings: GameSearchPluginSettings;
+  app: TestApp;
+};
+
+// getScreenshotDirectory is private on the class; expose it via a local helper for tests.
+function getScreenshotDirectory(plugin: TestPlugin, game: GameEntry, rootDirectory: string): string {
+  return (
+    plugin as unknown as {
+      getScreenshotDirectory(game: GameEntry, rootDirectory: string): string;
+    }
+  ).getScreenshotDirectory(game, rootDirectory);
+}
+
+function makeTestApp(): TestApp {
+  return {
+    vault: {
+      cachedRead: jest.fn<(file: TFile) => Promise<string>>().mockResolvedValue(''),
+      getAbstractFileByPath: jest.fn(),
+      adapter: {
+        exists: jest.fn<(path: string) => Promise<boolean>>().mockResolvedValue(false),
+        mkdir: jest.fn<(path: string) => Promise<void>>().mockResolvedValue(undefined),
+        writeBinary: jest.fn<(path: string, data: ArrayBuffer) => Promise<void>>().mockResolvedValue(undefined),
+        readBinary: jest.fn<(path: string) => Promise<ArrayBuffer>>().mockResolvedValue(new ArrayBuffer(8)),
+      },
+    },
+    metadataCache: {
+      getFirstLinkpathDest: jest.fn(),
+    },
+  };
+}
+
+function makePlugin(): TestPlugin {
+  const plugin = Object.create(GameSearchPlugin.prototype) as TestPlugin;
+  plugin.settings = createSettings();
+  plugin.app = makeTestApp();
+  return plugin;
+}
+
+function mockImageDownload(status = 200, bytes = new ArrayBuffer(8)): void {
+  mockRequestUrl.mockReset();
+  mockRequestUrl.mockResolvedValue({
+    status,
+    arrayBuffer: bytes,
+  } as RequestUrlResponse);
+}
 
 describe('GameSearchPlugin.getRenderedContents', () => {
   const game: GameEntry = {
@@ -20,15 +85,10 @@ describe('GameSearchPlugin.getRenderedContents', () => {
     releaseYear: '2022',
   };
 
-  let plugin: any;
+  let plugin: TestPlugin;
 
   beforeEach(() => {
-    plugin = Object.create(GameSearchPlugin.prototype);
-    plugin.settings = createSettings();
-    plugin.app = {
-      vault: { cachedRead: jest.fn().mockResolvedValue('') },
-      metadataCache: {},
-    };
+    plugin = makePlugin();
   });
 
   it('renders the default frontmatter block when no template or content is set', async () => {
@@ -51,9 +111,7 @@ describe('GameSearchPlugin.getRenderedContents', () => {
 
   it('uses the template file when set, substituting variables', async () => {
     plugin.settings.templateFile = 'templates/game';
-    plugin.app.metadataCache = {
-      getFirstLinkpathDest: jest.fn().mockReturnValue({ path: 'templates/game' }),
-    };
+    plugin.app.metadataCache.getFirstLinkpathDest.mockReturnValue({ path: 'templates/game' });
     plugin.app.vault.cachedRead.mockResolvedValue('## {{title}}\n{{summary}}');
 
     const output = await plugin.getRenderedContents(game);
@@ -94,28 +152,15 @@ describe('GameSearchPlugin.getRenderedContents', () => {
 });
 
 describe('GameSearchPlugin.downloadAndSaveImage', () => {
-  let plugin: any;
+  let plugin: TestPlugin;
 
   beforeEach(() => {
-    mockRequestUrl.mockReset();
-    mockRequestUrl.mockResolvedValue({ status: 200, arrayBuffer: new ArrayBuffer(8) });
-
-    plugin = Object.create(GameSearchPlugin.prototype);
-    plugin.settings = createSettings();
-    plugin.app = {
-      vault: {
-        adapter: {
-          exists: jest.fn().mockResolvedValue(false),
-          mkdir: jest.fn().mockResolvedValue(undefined),
-          writeBinary: jest.fn().mockResolvedValue(undefined),
-          readBinary: jest.fn().mockResolvedValue(new ArrayBuffer(8)),
-        },
-      },
-      metadataCache: {},
-    };
+    plugin = makePlugin();
   });
 
   it('writes a fresh file to the requested path', async () => {
+    mockImageDownload();
+
     const result = await plugin.downloadAndSaveImage(
       'cover.jpg',
       'assets/covers',
@@ -131,6 +176,7 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
   });
 
   it('picks a suffixed path when the file already exists', async () => {
+    mockImageDownload();
     plugin.app.vault.adapter.exists.mockImplementation(async (p: string) => p.endsWith('cover.jpg'));
 
     const result = await plugin.downloadAndSaveImage(
@@ -147,6 +193,7 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
   });
 
   it('keeps incrementing the suffix through multiple collisions', async () => {
+    mockImageDownload();
     plugin.app.vault.adapter.exists.mockImplementation(
       async (p: string) => p.endsWith('cover.jpg') || p.endsWith('cover-2.jpg'),
     );
@@ -161,9 +208,7 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
   });
 
   it('writes to a clean root path when the directory is empty (no double slash)', async () => {
-    plugin.app.vault.adapter.exists.mockResolvedValue(false);
-    plugin.app.vault.adapter.writeBinary.mockResolvedValue(undefined);
-    plugin.app.vault.adapter.readBinary.mockResolvedValue(new ArrayBuffer(8));
+    mockImageDownload();
 
     const result = await plugin.downloadAndSaveImage('cover.jpg', '', 'https://images.igdb.com/x/cover.jpg');
 
@@ -174,6 +219,8 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
   });
 
   it('writes to a clean path with no leading slash when directory is empty', async () => {
+    mockImageDownload();
+
     const result = await plugin.downloadAndSaveImage('cover.jpg', '', 'https://images.igdb.com/x/cover.jpg');
 
     expect(result).toBe('cover.jpg');
@@ -182,12 +229,13 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
 
     // round-trip: the path embedded in frontmatter is exactly the path the file was written to,
     // so vault.getAbstractFileByPath resolves it to the written file
-    const writtenPath = plugin.app.vault.adapter.writeBinary.mock.calls[0][0];
+    const writtenPath = plugin.app.vault.adapter.writeBinary.mock.calls[0]?.[0];
     plugin.app.vault.getAbstractFileByPath = jest.fn((p: string) => (p === writtenPath ? { path: p } : null));
     expect(plugin.app.vault.getAbstractFileByPath(result)).toEqual({ path: 'cover.jpg' });
   });
 
   it('resolves names without an extension', async () => {
+    mockImageDownload();
     plugin.app.vault.adapter.exists.mockImplementation(async (p: string) => p.endsWith('cover'));
 
     const result = await plugin.downloadAndSaveImage('cover', 'assets', 'https://images.igdb.com/x/cover.jpg');
@@ -196,6 +244,7 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
   });
 
   it('returns an empty string and skips the write when the download fails', async () => {
+    mockRequestUrl.mockReset();
     mockRequestUrl.mockRejectedValue(new Error('network down'));
 
     const result = await plugin.downloadAndSaveImage(
@@ -209,6 +258,7 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
   });
 
   it('re-resolves and rewrites when another save clobbers the path mid-write', async () => {
+    mockImageDownload();
     const adapter = plugin.app.vault.adapter;
     let coverExistsCalls = 0;
     // ensureDirectory also probes exists() for each path segment; count only
@@ -238,19 +288,17 @@ describe('GameSearchPlugin.downloadAndSaveImage', () => {
 });
 
 describe('GameSearchPlugin.getScreenshotDirectory', () => {
-  let plugin: any;
+  let plugin: TestPlugin;
 
   beforeEach(() => {
-    plugin = Object.create(GameSearchPlugin.prototype);
-    plugin.settings = createSettings();
-    plugin.app = { vault: {}, metadataCache: {} };
+    plugin = makePlugin();
   });
 
   it('returns the game folder with no leading slash when the root directory is empty', () => {
-    expect(plugin.getScreenshotDirectory({ title: 'Elden Ring' }, '')).toBe('Elden Ring');
+    expect(getScreenshotDirectory(plugin, { title: 'Elden Ring' }, '')).toBe('Elden Ring');
   });
 
   it('prefixes the game folder with the root directory when set', () => {
-    expect(plugin.getScreenshotDirectory({ title: 'Elden Ring' }, 'assets')).toBe('assets/Elden Ring');
+    expect(getScreenshotDirectory(plugin, { title: 'Elden Ring' }, 'assets')).toBe('assets/Elden Ring');
   });
 });

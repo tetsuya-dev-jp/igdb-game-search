@@ -1,4 +1,4 @@
-import { App, normalizePath, Notice, TFile } from 'obsidian';
+import { App, moment, normalizePath, Notice, TFile } from 'obsidian';
 import { t } from '@utils/i18n';
 
 export async function getTemplateContents(app: App, templatePath: string | undefined): Promise<string> {
@@ -21,7 +21,14 @@ export async function getTemplateContents(app: App, templatePath: string | undef
 export function applyTemplateTransformations(rawTemplateContents: string): string {
   return rawTemplateContents.replace(
     /{{\s*(date|time)\s*(([+-]\d+)([yqmwdhs]))?\s*(:.+?)?}}/gi,
-    (_, _timeOrDate, calc, timeDelta, unit, momentFormat) => {
+    (
+      _substring,
+      _timeOrDate: string,
+      calc: string,
+      timeDelta: string,
+      unit: moment.unitOfTime.DurationConstructor,
+      momentFormat: string,
+    ) => {
       const currentDate = window.moment();
       if (calc) {
         currentDate.add(parseInt(timeDelta, 10), unit);

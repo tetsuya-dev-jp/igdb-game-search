@@ -1,4 +1,5 @@
 import { detectLocale, resolveLocale, t } from './i18n';
+import { describe, expect, it } from '@jest/globals';
 
 // Locale detection depends on the jsdom environment (moment locale vs
 // navigator.language), so lookup tests pass the locale explicitly.

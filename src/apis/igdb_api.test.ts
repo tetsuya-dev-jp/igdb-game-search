@@ -2,9 +2,10 @@ import { ApiError, apiRequest, ConfigurationError } from '@apis/base_api';
 import { createSettings } from '../../test/settings_fixture';
 import { IgdbApi } from './igdb_api';
 import { IgdbGame, TwitchAccessTokenResponse } from './models/igdb_response';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 jest.mock('@apis/base_api', () => {
-  const actual = jest.requireActual('@apis/base_api');
+  const actual = jest.requireActual<typeof import('@apis/base_api')>('@apis/base_api');
   return {
     ...actual,
     apiRequest: jest.fn(),

@@ -23,7 +23,9 @@ export function makeScreenshotFileName(index: number, extension = 'jpg') {
 }
 
 export function changeSnakeCase(game: GameEntry) {
-  return Object.entries(game).reduce<Record<string, string | string[] | number | undefined>>((acc, [key, value]) => {
+  return (Object.entries(game) as [string, string | string[] | number | undefined][]).reduce<
+    Record<string, string | string[] | number | undefined>
+  >((acc, [key, value]) => {
     acc[camelToSnakeCase(key)] = value;
     return acc;
   }, {});
@@ -33,7 +35,7 @@ export function applyDefaultFrontMatter(
   game: GameEntry,
   frontmatter: FrontMatter | string,
   keyType: DefaultFrontmatterKeyType = DefaultFrontmatterKeyType.snakeCase,
-) {
+): Record<string, string | string[] | number | undefined> {
   const frontMatter: Record<string, string | string[] | number | undefined> =
     keyType === DefaultFrontmatterKeyType.camelCase ? { ...game } : changeSnakeCase(game);
   const extraFrontMatter = typeof frontmatter === 'string' ? parseFrontMatter(frontmatter) : frontmatter;
@@ -41,13 +43,13 @@ export function applyDefaultFrontMatter(
   for (const key in extraFrontMatter) {
     const value = extraFrontMatter[key]?.toString().trim() ?? '';
     if (frontMatter[key] && frontMatter[key] !== value) {
-      frontMatter[key] = `${frontMatter[key]}, ${value}`;
+      frontMatter[key] = `${String(frontMatter[key])}, ${value}`;
     } else {
       frontMatter[key] = value;
     }
   }
 
-  return frontMatter as object;
+  return frontMatter;
 }
 
 export function replaceVariableSyntax(game: GameEntry, text: string): string {
@@ -95,10 +97,10 @@ export function parseFrontMatter(frontMatterString: string) {
     }, {});
 }
 
-export function toStringFrontMatter(frontMatter: object): string {
+export function toStringFrontMatter(frontMatter: Record<string, string | string[] | number | undefined>): string {
   return Object.entries(frontMatter)
     .map(([key, value]) => {
-      const newValue = value?.toString().trim() ?? '';
+      const newValue = (value == null ? '' : String(value)).trim();
       const emitLine = (line: string): string => {
         if (/:\s/.test(line)) {
           return `${key}: "${line.replace(/"/g, '\\"')}"\n`;

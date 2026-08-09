@@ -165,14 +165,14 @@ export class GameSearchSettingTab extends PluginSettingTab {
       });
 
     containerEl
-      .createEl('div', {
+      .createDiv({
         cls: ['setting-item-description', 'game-search-plugin__settings--new_file_name_hint'],
       })
       .append(previewEl);
   }
 
   private createTemplateFileSetting(containerEl: HTMLElement) {
-    const templateFileDesc = document.createDocumentFragment();
+    const templateFileDesc = createFragment();
     templateFileDesc.createDiv({ text: t('settings.template.desc', this.lang) });
     templateFileDesc.createEl('a', {
       text: t('settings.template.exampleButton', this.lang),

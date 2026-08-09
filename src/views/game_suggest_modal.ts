@@ -41,8 +41,8 @@ export class GameSuggestModal extends SuggestModal<GameEntry> {
       });
     }
 
-    const textContainer = el.createEl('div', { cls: 'game-text-info' });
-    textContainer.createEl('div', { text: game.title });
+    const textContainer = el.createDiv({ cls: 'game-text-info' });
+    textContainer.createDiv({ text: game.title });
 
     const releaseYear = game.releaseYear ? `(${game.releaseYear})` : '';
     const platform = game.platform ? ` ${game.platform}` : '';
@@ -64,7 +64,7 @@ export class GameSuggestModal extends SuggestModal<GameEntry> {
     // close(), so the deferred cancel sees it and no-ops; a genuine dismiss
     // (Esc / click-away) has no pending selection and delivers undefined.
     if (this.delivered) return;
-    setTimeout(() => {
+    window.setTimeout(() => {
       if (!this.delivered) {
         this.delivered = true;
         this.onChoose(null, undefined);

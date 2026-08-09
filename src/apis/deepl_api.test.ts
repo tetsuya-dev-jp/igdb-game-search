@@ -1,9 +1,10 @@
+import { afterAll, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ConfigurationError, apiRequest } from '@apis/base_api';
 import { createSettings } from '../../test/settings_fixture';
 import { DeepLApi, DEEPL_FREE_TRANSLATE_URL, DEEPL_PRO_TRANSLATE_URL } from './deepl_api';
 
 jest.mock('@apis/base_api', () => {
-  const actual = jest.requireActual('@apis/base_api');
+  const actual = jest.requireActual<typeof import('@apis/base_api')>('@apis/base_api');
   return {
     ...actual,
     apiRequest: jest.fn(),

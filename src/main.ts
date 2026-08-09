@@ -194,7 +194,12 @@ export default class GameSearchPlugin extends Plugin {
       // Race guard: a concurrent save may have claimed this path between our
       // exists() check and writeBinary. Verify our bytes are the ones on disk;
       // if another writer clobbered us, re-resolve and write again.
-      const onDisk = await this.app.vault.adapter.readBinary(filePath).catch(() => null);
+      let onDisk: ArrayBuffer | null = null;
+      try {
+        onDisk = await this.app.vault.adapter.readBinary(filePath);
+      } catch {
+        // treat a read failure as a clobbered write; the retry re-resolves the path
+      }
       const expected = new Uint8Array(imageData);
       if (!onDisk || onDisk.byteLength !== expected.byteLength) {
         const retryPath = await this.resolveUniquePath(normalizedDirectory, filePath.split('/').pop() ?? imageName);
@@ -346,7 +351,8 @@ export default class GameSearchPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = (await this.loadData()) as Partial<GameSearchPluginSettings>;
+    this.settings = { ...DEFAULT_SETTINGS, ...data };
   }
 
   async saveSettings() {

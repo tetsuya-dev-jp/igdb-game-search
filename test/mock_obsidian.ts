@@ -1,31 +1,31 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- test mock: loose typing is intentional */
 import * as obsidian from 'obsidian';
+import { jest } from '@jest/globals';
 
 export const requestUrl: typeof obsidian.requestUrl = (request: string | obsidian.RequestUrlParam) => {
   return fetch(request as string).then(res => res.json()) as obsidian.RequestUrlResponsePromise;
 };
 
 export class Plugin {
-  app: any = {};
+  app: unknown = {};
   manifest = { id: 'igdb-game-search', version: '0.0.0', minAppVersion: '0.0.0' };
-  loadData = jest.fn().mockResolvedValue({});
-  saveData = jest.fn().mockResolvedValue(undefined);
-  addRibbonIcon = jest.fn().mockReturnValue({ addClass: jest.fn() });
+  loadData = jest.fn<() => Promise<unknown>>().mockResolvedValue({});
+  saveData = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  addRibbonIcon = jest.fn<() => { addClass: () => void }>().mockReturnValue({ addClass: jest.fn() });
   addCommand = jest.fn();
   addSettingTab = jest.fn();
 }
 
 export class Notice {
-  constructor(message: any) {
+  constructor(message: string) {
     this.message = message;
   }
-  message: any;
+  message: string;
 }
 
 export class Modal {
-  app: any;
-  contentEl: any;
-  constructor(app: any) {
+  app: App;
+  contentEl: unknown;
+  constructor(app: App) {
     this.app = app;
     this.contentEl = {
       empty: jest.fn(),
@@ -43,7 +43,7 @@ export class Modal {
 }
 
 export class SuggestModal extends Modal {
-  constructor(app: any) {
+  constructor(app: App) {
     super(app);
   }
   setPlaceholder = jest.fn();
@@ -60,7 +60,7 @@ export class MarkdownView {}
 export class App {}
 
 export class Setting {
-  constructor(_containerEl: any) {}
+  constructor(_containerEl: unknown) {}
   setName = jest.fn().mockReturnValue(this);
   setDesc = jest.fn().mockReturnValue(this);
   setHeading = jest.fn().mockReturnValue(this);
@@ -81,7 +81,7 @@ export const normalizePath = (p: string) => (p === '' ? '/' : p.replace(/\/+/g, 
 export class TextComponent {
   inputEl: HTMLInputElement;
   constructor() {
-    this.inputEl = document.createElement('input');
+    this.inputEl = createEl('input');
   }
   setValue = jest.fn((v: string) => {
     this.inputEl.value = v;

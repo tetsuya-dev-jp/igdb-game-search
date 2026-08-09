@@ -61,7 +61,7 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMs = 30_000, message 
   return Promise.race([
     promise,
     new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new ApiError(message, 408)), timeoutMs);
+      window.setTimeout(() => reject(new ApiError(message, 408)), timeoutMs);
     }),
   ]);
 }

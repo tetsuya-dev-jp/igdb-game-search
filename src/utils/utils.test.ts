@@ -1,6 +1,7 @@
 import { GameEntry } from '@models/game.model';
 import { DefaultFrontmatterKeyType } from '@settings/settings';
 import * as utils from './utils';
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 
 // The real @settings/settings module cannot be loaded here: its import graph cycles
 // through main.ts → obsidian, and jest.requireActual inside the mock factory returns a

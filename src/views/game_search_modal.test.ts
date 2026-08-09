@@ -3,9 +3,10 @@ import { GameEntry } from '@models/game.model';
 import { GameSearchModal } from './game_search_modal';
 import { GameSuggestModal } from './game_suggest_modal';
 import { createSettings } from '../../test/settings_fixture';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 jest.mock('@apis/igdb_api', () => ({
-  ...jest.requireActual('@apis/igdb_api'),
+  ...jest.requireActual<typeof import('@apis/igdb_api')>('@apis/igdb_api'),
   IgdbApi: jest.fn(),
 }));
 
@@ -27,10 +28,10 @@ function makeSuggestModal(onChoose: (error: Error | null, result?: GameEntry) =>
 }
 
 describe('GameSearchModal', () => {
-  let mockGetByQuery: jest.Mock;
+  let mockGetByQuery: jest.Mock<(query: string) => Promise<GameEntry[]>>;
 
   beforeEach(() => {
-    mockGetByQuery = jest.fn();
+    mockGetByQuery = jest.fn<(query: string) => Promise<GameEntry[]>>();
     MockIgdbApi.mockImplementation(() => ({ getByQuery: mockGetByQuery }));
   });
 
@@ -48,6 +49,7 @@ describe('GameSearchModal', () => {
   it('Esc during an in-flight search discards the result and still settles the callback', async () => {
     const callback = jest.fn();
     const { modal } = makeSearchModal(callback);
+    const closeSpy = jest.spyOn(modal, 'close');
     let resolveSearch!: (value: GameEntry[]) => void;
     mockGetByQuery.mockReturnValue(new Promise<GameEntry[]>(resolve => (resolveSearch = resolve)));
 
@@ -60,12 +62,13 @@ describe('GameSearchModal', () => {
     // the cancelled flag discards the late result; the onClose callback already settled the promise
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith(null, []);
-    expect(modal.close).toHaveBeenCalled();
+    expect(closeSpy).toHaveBeenCalled();
   });
 
   it('a successful search delivers results and does not double-callback on later close', async () => {
     const callback = jest.fn();
     const { modal } = makeSearchModal(callback);
+    const closeSpy = jest.spyOn(modal, 'close');
     const results: GameEntry[] = [{ title: 'Elden Ring' }];
     mockGetByQuery.mockResolvedValue(results);
 
@@ -74,7 +77,7 @@ describe('GameSearchModal', () => {
 
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith(null, results);
-    expect(modal.close).toHaveBeenCalled();
+    expect(closeSpy).toHaveBeenCalled();
   });
 
   it('a failed search rejects the callback and does not double-callback on close', async () => {
