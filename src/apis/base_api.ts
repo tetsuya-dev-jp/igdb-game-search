@@ -43,6 +43,7 @@ export async function apiRequest<T>(
       'Content-Type': 'application/json; charset=utf-8',
       ...options.headers,
     },
+    throw: false,
   });
 
   if (res.status >= 400) {
