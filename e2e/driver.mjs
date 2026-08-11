@@ -424,7 +424,7 @@ async function main() {
     const realSelection = process.env.E2E_SUGGEST_MODAL === '1';
     if (!clientId || !clientSecret) {
       console.log('SKIP 6: set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET to run the happy-path test');
-      return;
+      return 'skip';
     }
 
     // Inject credentials + enable cover-image saving through the real settings
@@ -711,7 +711,11 @@ async function main() {
 
 async function test(name, fn) {
   try {
-    await fn();
+    const result = await fn();
+    if (result === 'skip') {
+      console.log(`SKIP ${name}`);
+      return;
+    }
     pass(name);
   } catch (err) {
     fail(name, err.message);
