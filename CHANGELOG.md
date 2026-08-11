@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.4.0...0.5.0) (2026-08-11)
+
+
+### Features
+
+* migrate settings tab to the declarative getSettingDefinitions API ([cc5dd09](https://github.com/tetsuya-dev-jp/igdb-game-search/commit/cc5dd09c1621b362fc3153f474dc6a94cadeeab0))
+
+
+### Bug Fixes
+
+* **e2e:** report skipped happy-path test as SKIP, not PASS ([79ad549](https://github.com/tetsuya-dev-jp/igdb-game-search/commit/79ad549fc8953f72f424d4045ed19cc57fc74b8e))
+
 ## [0.4.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.3.0...0.4.0) (2026-08-09)
 
 
