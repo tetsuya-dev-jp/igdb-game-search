@@ -1,11 +1,9 @@
 import { replaceDateInString } from '@utils/utils';
 import { AUTO_TRANSLATION_LANGUAGE, DEEPL_TARGET_LANGUAGES } from '@utils/deepl_languages';
-import { App, PluginSettingTab, Setting } from 'obsidian';
-import { t, I18nKey } from '@utils/i18n';
+import { App, PluginSettingTab, Setting, SettingDefinitionItem } from 'obsidian';
+import { t } from '@utils/i18n';
 import GameSearchPlugin from '../main';
 import { FileNameFormatSuggest } from './suggesters/FileNameFormatSuggester';
-import { FileSuggest } from './suggesters/FileSuggester';
-import { FolderSuggest } from './suggesters/FolderSuggester';
 
 const docUrl = 'https://github.com/tetsuya-dev-jp/igdb-game-search';
 
@@ -62,6 +60,27 @@ export const DEFAULT_SETTINGS: GameSearchPluginSettings = {
   uiLanguage: 'auto',
 };
 
+const UI_LANGUAGES: Record<string, string> = {
+  auto: 'auto',
+  en: 'en',
+  ja: 'ja',
+  ko: 'ko',
+};
+
+const FRONTMATTER_KEY_TYPES: Record<string, string> = Object.fromEntries(
+  Object.values(DefaultFrontmatterKeyType).map(value => [value, value]),
+);
+
+// Text-bearing settings are trimmed before persistence.
+const TRIMMED_SETTING_KEYS = new Set<string>([
+  'folder',
+  'fileNameFormat',
+  'templateFile',
+  'coverImagePath',
+  'screenshotImagePath',
+  'deeplApiKey',
+]);
+
 export class GameSearchSettingTab extends PluginSettingTab {
   constructor(
     app: App,
@@ -70,360 +89,300 @@ export class GameSearchSettingTab extends PluginSettingTab {
     super(app, plugin);
   }
 
-  display(): void {
-    const { containerEl } = this;
-    containerEl.empty();
-    containerEl.classList.add('game-search-plugin__settings');
-
-    this.createGeneralSettings(containerEl);
-    this.createTemplateFileSetting(containerEl);
-    this.createIgdbSettings(containerEl);
-    this.createTranslationSettings(containerEl);
-    this.createSearchSettings(containerEl);
-    this.createNoteSettings(containerEl);
-    this.createNoteContentSettings(containerEl);
-  }
-
   private get lang(): string {
     return this.plugin.settings.uiLanguage;
   }
 
-  private createGeneralSettings(containerEl: HTMLElement) {
-    this.createHeader('settings.general.header', containerEl);
-    this.createFileLocationSetting(containerEl);
-    this.createFileNameFormatSetting(containerEl);
-    this.createUiLanguageSetting(containerEl);
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    const lang = this.lang;
+    const settings = this.plugin.settings;
+
+    return [
+      {
+        type: 'group',
+        heading: t('settings.general.header', lang),
+        items: [
+          {
+            name: t('settings.general.location.name', lang),
+            desc: t('settings.general.location.desc', lang),
+            control: {
+              type: 'folder',
+              key: 'folder',
+              placeholder: t('settings.general.location.placeholder', lang),
+              includeRoot: true,
+            },
+          },
+          {
+            name: t('settings.general.fileName.name', lang),
+            desc: t('settings.general.fileName.desc', lang),
+            render: setting => this.renderFileNameFormat(setting),
+          },
+          {
+            name: t('settings.uiLanguage.name', lang),
+            desc: t('settings.uiLanguage.desc', lang),
+            control: {
+              type: 'dropdown',
+              key: 'uiLanguage',
+              options: UI_LANGUAGES,
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        items: [
+          {
+            name: t('settings.template.name', lang),
+            desc: this.templateFileDesc(lang),
+            control: {
+              type: 'file',
+              key: 'templateFile',
+              placeholder: t('settings.template.placeholder', lang),
+              filter: file => file.extension === 'md',
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('settings.igdb.header', lang),
+        items: [
+          {
+            name: t('settings.igdb.clientId.name', lang),
+            desc: t('settings.igdb.clientId.desc', lang),
+            control: { type: 'text', key: 'twitchClientId' },
+          },
+          {
+            name: t('settings.igdb.clientSecret.name', lang),
+            desc: t('settings.igdb.clientSecret.desc', lang),
+            render: setting => this.renderSecret(setting, 'twitchClientSecret', '', false),
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('settings.search.header', lang),
+        items: [
+          {
+            name: t('settings.search.cover.name', lang),
+            desc: t('settings.search.cover.desc', lang),
+            control: { type: 'toggle', key: 'showCoverImageInSearch' },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('settings.translation.header', lang),
+        items: [
+          {
+            name: t('settings.translation.enable.name', lang),
+            desc: t('settings.translation.enable.desc', lang),
+            control: { type: 'toggle', key: 'enableTranslation' },
+          },
+          {
+            name: t('settings.translation.target.name', lang),
+            desc: t('settings.translation.target.desc', lang),
+            control: {
+              type: 'dropdown',
+              key: 'translationTargetLanguage',
+              options: DEEPL_TARGET_LANGUAGES,
+              disabled: () => !settings.enableTranslation,
+            },
+          },
+          {
+            name: t('settings.translation.key.name', lang),
+            desc: t('settings.translation.key.desc', lang),
+            render: setting =>
+              this.renderSecret(
+                setting,
+                'deeplApiKey',
+                t('settings.translation.key.name', lang),
+                !settings.enableTranslation,
+              ),
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('settings.note.header', lang),
+        items: [
+          {
+            name: t('settings.note.open.name', lang),
+            desc: t('settings.note.open.desc', lang),
+            control: { type: 'toggle', key: 'openPageOnCompletion' },
+          },
+          {
+            name: t('settings.note.coverSave.name', lang),
+            desc: t('settings.note.coverSave.desc', lang),
+            control: { type: 'toggle', key: 'enableCoverImageSave' },
+          },
+          {
+            name: t('settings.note.coverFolder.name', lang),
+            desc: t('settings.note.coverFolder.desc', lang),
+            control: {
+              type: 'folder',
+              key: 'coverImagePath',
+              placeholder: t('settings.note.coverFolder.placeholder', lang),
+              includeRoot: true,
+            },
+          },
+          {
+            name: t('settings.note.screenshotSave.name', lang),
+            desc: t('settings.note.screenshotSave.desc', lang),
+            control: { type: 'toggle', key: 'enableScreenshotSave' },
+          },
+          {
+            name: t('settings.note.screenshotFolder.name', lang),
+            desc: t('settings.note.screenshotFolder.desc', lang),
+            control: {
+              type: 'folder',
+              key: 'screenshotImagePath',
+              placeholder: t('settings.note.screenshotFolder.placeholder', lang),
+              includeRoot: true,
+              disabled: () => !settings.enableScreenshotSave,
+            },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('settings.content.header', lang),
+        items: [
+          {
+            name: t('settings.content.defaultFm.name', lang),
+            desc: t('settings.content.defaultFm.desc', lang),
+            control: { type: 'toggle', key: 'useDefaultFrontmatter' },
+          },
+          {
+            name: t('settings.content.keyStyle.name', lang),
+            desc: t('settings.content.keyStyle.desc', lang),
+            control: {
+              type: 'dropdown',
+              key: 'defaultFrontmatterKeyType',
+              options: FRONTMATTER_KEY_TYPES,
+              disabled: () => !settings.useDefaultFrontmatter,
+            },
+          },
+          {
+            name: t('settings.content.extraFm.name', lang),
+            desc: t('settings.content.extraFm.desc', lang),
+            control: {
+              type: 'textarea',
+              key: 'frontmatter',
+              placeholder: t('settings.content.extraFm.placeholder', lang),
+            },
+          },
+          {
+            name: t('settings.content.body.name', lang),
+            desc: t('settings.content.body.desc', lang),
+            control: {
+              type: 'textarea',
+              key: 'content',
+              placeholder: t('settings.content.body.placeholder', lang),
+            },
+          },
+        ],
+      },
+    ];
   }
 
-  private createUiLanguageSetting(containerEl: HTMLElement) {
-    new Setting(containerEl)
-      .setName(t('settings.uiLanguage.name', this.lang))
-      .setDesc(t('settings.uiLanguage.desc', this.lang))
-      .addDropdown(dropdown => {
-        ['auto', 'en', 'ja', 'ko'].forEach(value => {
-          dropdown.addOption(value, value);
-        });
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    if (key === 'uiLanguage') {
+      this.plugin.settings.uiLanguage = value as string;
+      await this.plugin.saveSettings();
+      this.update();
+      return;
+    }
 
-        dropdown.setValue(this.plugin.settings.uiLanguage).onChange(async value => {
-          this.plugin.settings.uiLanguage = value;
-          await this.plugin.saveSettings();
-          this.display();
-        });
-      });
+    if (key === 'twitchClientId' || key === 'twitchClientSecret') {
+      (this.plugin.settings as unknown as Record<string, unknown>)[key] = (value as string).trim();
+      this.plugin.settings.igdbAccessToken = '';
+      this.plugin.settings.igdbAccessTokenExpiresAt = 0;
+      await this.plugin.saveSettings();
+      this.refreshDomState();
+      return;
+    }
+
+    if (TRIMMED_SETTING_KEYS.has(key)) {
+      (this.plugin.settings as unknown as Record<string, unknown>)[key] = (value as string).trim();
+      await this.plugin.saveSettings();
+      return;
+    }
+
+    if (key === 'enableTranslation' || key === 'enableScreenshotSave' || key === 'useDefaultFrontmatter') {
+      await super.setControlValue(key, value);
+      // These toggles gate the disabled state of sibling settings; a full
+      // re-render refreshes both the declarative predicates and the
+      // imperatively rendered secret inputs.
+      this.update();
+      return;
+    }
+
+    await super.setControlValue(key, value);
+    this.refreshDomState();
   }
 
-  private createHeader(title: I18nKey, containerEl: HTMLElement): void {
-    new Setting(containerEl).setName(t(title, this.lang)).setHeading();
-  }
-
-  private createFileLocationSetting(containerEl: HTMLElement) {
-    new Setting(containerEl)
-      .setName(t('settings.general.location.name', this.lang))
-      .setDesc(t('settings.general.location.desc', this.lang))
-      .addText(text => {
-        const saveValue = async (value: string) => {
-          this.plugin.settings.folder = value.trim();
-          await this.plugin.saveSettings();
-        };
-
-        try {
-          new FolderSuggest(this.app, text.inputEl, saveValue);
-        } catch (error) {
-          console.error(error);
-        }
-
-        text
-          .setPlaceholder(t('settings.general.location.placeholder', this.lang))
-          .setValue(this.plugin.settings.folder)
-          .onChange(saveValue);
-      });
-  }
-
-  private createFileNameFormatSetting(containerEl: HTMLElement) {
-    const previewEl = createEl('code', {
-      text: replaceDateInString(this.plugin.settings.fileNameFormat) || '{{title}}',
-    });
-
-    new Setting(containerEl)
-      .setClass('game-search-plugin__settings--new_file_name')
-      .setName(t('settings.general.fileName.name', this.lang))
-      .setDesc(t('settings.general.fileName.desc', this.lang))
-      .addSearch(cb => {
-        try {
-          new FileNameFormatSuggest(this.app, cb.inputEl);
-        } catch (error) {
-          console.error(error);
-        }
-
-        cb.setPlaceholder(t('settings.general.fileName.placeholder', this.lang))
-          .setValue(this.plugin.settings.fileNameFormat)
-          .onChange(async value => {
-            this.plugin.settings.fileNameFormat = value.trim();
-            previewEl.setText(replaceDateInString(value) || '{{title}}');
-            await this.plugin.saveSettings();
-          });
-      });
-
-    containerEl
-      .createDiv({
-        cls: ['setting-item-description', 'game-search-plugin__settings--new_file_name_hint'],
-      })
-      .append(previewEl);
-  }
-
-  private createTemplateFileSetting(containerEl: HTMLElement) {
+  private templateFileDesc(lang: string): DocumentFragment {
     const templateFileDesc = createFragment();
-    templateFileDesc.createDiv({ text: t('settings.template.desc', this.lang) });
+    templateFileDesc.createDiv({ text: t('settings.template.desc', lang) });
     templateFileDesc.createEl('a', {
-      text: t('settings.template.exampleButton', this.lang),
+      text: t('settings.template.exampleButton', lang),
       href: `${docUrl}#example-template`,
     });
-
-    new Setting(containerEl)
-      .setName(t('settings.template.name', this.lang))
-      .setDesc(templateFileDesc)
-      .addText(text => {
-        const saveValue = async (value: string) => {
-          this.plugin.settings.templateFile = value.trim();
-          await this.plugin.saveSettings();
-        };
-
-        try {
-          new FileSuggest(this.app, text.inputEl, saveValue);
-        } catch (error) {
-          console.error(error);
-        }
-
-        text
-          .setPlaceholder(t('settings.template.placeholder', this.lang))
-          .setValue(this.plugin.settings.templateFile)
-          .onChange(saveValue);
-      });
+    return templateFileDesc;
   }
 
-  private createIgdbSettings(containerEl: HTMLElement) {
-    this.createHeader('settings.igdb.header', containerEl);
+  private renderFileNameFormat(setting: Setting): void | (() => void) {
+    const lang = this.lang;
+    const settings = this.plugin.settings;
+    const previewEl = createEl('code', {
+      text: replaceDateInString(settings.fileNameFormat) || '{{title}}',
+    });
 
-    new Setting(containerEl)
-      .setName(t('settings.igdb.clientId.name', this.lang))
-      .setDesc(t('settings.igdb.clientId.desc', this.lang))
-      .addText(text =>
-        text.setValue(this.plugin.settings.twitchClientId).onChange(async value => {
-          this.plugin.settings.twitchClientId = value.trim();
-          this.plugin.settings.igdbAccessToken = '';
-          this.plugin.settings.igdbAccessTokenExpiresAt = 0;
-          await this.plugin.saveSettings();
-        }),
-      );
+    setting.settingEl.addClass('game-search-plugin__settings--new_file_name');
+    setting.addSearch(cb => {
+      try {
+        new FileNameFormatSuggest(this.app, cb.inputEl);
+      } catch (error) {
+        console.error(error);
+      }
 
-    new Setting(containerEl)
-      .setName(t('settings.igdb.clientSecret.name', this.lang))
-      .setDesc(t('settings.igdb.clientSecret.desc', this.lang))
-      .addText(text => {
-        text.inputEl.type = 'password';
-        text.setValue(this.plugin.settings.twitchClientSecret).onChange(async value => {
-          this.plugin.settings.twitchClientSecret = value.trim();
-          this.plugin.settings.igdbAccessToken = '';
-          this.plugin.settings.igdbAccessTokenExpiresAt = 0;
-          await this.plugin.saveSettings();
+      cb.setPlaceholder(t('settings.general.fileName.placeholder', lang))
+        .setValue(settings.fileNameFormat)
+        .onChange(async value => {
+          previewEl.setText(replaceDateInString(value) || '{{title}}');
+          await this.setControlValue('fileNameFormat', value);
         });
-      });
+    });
+
+    const hintEl = createDiv({
+      cls: ['setting-item-description', 'game-search-plugin__settings--new_file_name_hint'],
+    });
+    hintEl.append(previewEl);
+    // The framework attaches the row to the list only after render() returns,
+    // which orphans any sibling inserted here. Schedule the insertion so the
+    // hint lands right below the row once it is in the DOM; re-renders are
+    // deduped by removing stale hints first.
+    const timer = window.setTimeout(() => {
+      document.querySelectorAll('.game-search-plugin__settings--new_file_name_hint').forEach(el => el.remove());
+      setting.settingEl.after(hintEl);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      hintEl.remove();
+    };
   }
 
-  private createSearchSettings(containerEl: HTMLElement) {
-    this.createHeader('settings.search.header', containerEl);
-
-    new Setting(containerEl)
-      .setName(t('settings.search.cover.name', this.lang))
-      .setDesc(t('settings.search.cover.desc', this.lang))
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.showCoverImageInSearch).onChange(async value => {
-          this.plugin.settings.showCoverImageInSearch = value;
-          await this.plugin.saveSettings();
-        }),
-      );
-  }
-
-  private createTranslationSettings(containerEl: HTMLElement) {
-    this.createHeader('settings.translation.header', containerEl);
-
-    new Setting(containerEl)
-      .setName(t('settings.translation.enable.name', this.lang))
-      .setDesc(t('settings.translation.enable.desc', this.lang))
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.enableTranslation).onChange(async value => {
-          this.plugin.settings.enableTranslation = value;
-          await this.plugin.saveSettings();
-          this.display();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName(t('settings.translation.target.name', this.lang))
-      .setDesc(t('settings.translation.target.desc', this.lang))
-      .addDropdown(dropdown => {
-        Object.entries(DEEPL_TARGET_LANGUAGES).forEach(([value, label]) => {
-          dropdown.addOption(value, label);
+  private renderSecret(setting: Setting, key: string, placeholder: string, disabled: boolean): void {
+    setting.addText(text => {
+      text.inputEl.type = 'password';
+      text
+        .setPlaceholder(placeholder)
+        .setDisabled(disabled)
+        .setValue((this.getControlValue(key) as string) ?? '')
+        .onChange(async value => {
+          await this.setControlValue(key, value);
         });
-
-        dropdown
-          .setValue(this.plugin.settings.translationTargetLanguage)
-          .setDisabled(!this.plugin.settings.enableTranslation)
-          .onChange(async value => {
-            this.plugin.settings.translationTargetLanguage = value;
-            await this.plugin.saveSettings();
-          });
-      });
-
-    new Setting(containerEl)
-      .setName(t('settings.translation.key.name', this.lang))
-      .setDesc(t('settings.translation.key.desc', this.lang))
-      .addText(text => {
-        text.inputEl.type = 'password';
-        text
-          .setPlaceholder(t('settings.translation.key.name', this.lang))
-          .setValue(this.plugin.settings.deeplApiKey)
-          .setDisabled(!this.plugin.settings.enableTranslation)
-          .onChange(async value => {
-            this.plugin.settings.deeplApiKey = value.trim();
-            await this.plugin.saveSettings();
-          });
-      });
-  }
-
-  private createNoteSettings(containerEl: HTMLElement) {
-    this.createHeader('settings.note.header', containerEl);
-
-    new Setting(containerEl)
-      .setName(t('settings.note.open.name', this.lang))
-      .setDesc(t('settings.note.open.desc', this.lang))
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.openPageOnCompletion).onChange(async value => {
-          this.plugin.settings.openPageOnCompletion = value;
-          await this.plugin.saveSettings();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName(t('settings.note.coverSave.name', this.lang))
-      .setDesc(t('settings.note.coverSave.desc', this.lang))
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.enableCoverImageSave).onChange(async value => {
-          this.plugin.settings.enableCoverImageSave = value;
-          await this.plugin.saveSettings();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName(t('settings.note.coverFolder.name', this.lang))
-      .setDesc(t('settings.note.coverFolder.desc', this.lang))
-      .addText(text => {
-        const saveValue = async (value: string) => {
-          this.plugin.settings.coverImagePath = value.trim();
-          await this.plugin.saveSettings();
-        };
-
-        try {
-          new FolderSuggest(this.app, text.inputEl, saveValue);
-        } catch (error) {
-          console.error(error);
-        }
-
-        text
-          .setPlaceholder(t('settings.note.coverFolder.placeholder', this.lang))
-          .setValue(this.plugin.settings.coverImagePath)
-          .onChange(saveValue);
-      });
-
-    new Setting(containerEl)
-      .setName(t('settings.note.screenshotSave.name', this.lang))
-      .setDesc(t('settings.note.screenshotSave.desc', this.lang))
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.enableScreenshotSave).onChange(async value => {
-          this.plugin.settings.enableScreenshotSave = value;
-          await this.plugin.saveSettings();
-          this.display();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName(t('settings.note.screenshotFolder.name', this.lang))
-      .setDesc(t('settings.note.screenshotFolder.desc', this.lang))
-      .addText(text => {
-        const saveValue = async (value: string) => {
-          this.plugin.settings.screenshotImagePath = value.trim();
-          await this.plugin.saveSettings();
-        };
-
-        try {
-          new FolderSuggest(this.app, text.inputEl, saveValue);
-        } catch (error) {
-          console.error(error);
-        }
-
-        text
-          .setPlaceholder(t('settings.note.screenshotFolder.placeholder', this.lang))
-          .setValue(this.plugin.settings.screenshotImagePath)
-          .setDisabled(!this.plugin.settings.enableScreenshotSave)
-          .onChange(saveValue);
-      });
-  }
-
-  private createNoteContentSettings(containerEl: HTMLElement) {
-    this.createHeader('settings.content.header', containerEl);
-
-    new Setting(containerEl)
-      .setName(t('settings.content.defaultFm.name', this.lang))
-      .setDesc(t('settings.content.defaultFm.desc', this.lang))
-      .addToggle(toggle =>
-        toggle.setValue(this.plugin.settings.useDefaultFrontmatter).onChange(async value => {
-          this.plugin.settings.useDefaultFrontmatter = value;
-          await this.plugin.saveSettings();
-          this.display();
-        }),
-      );
-
-    new Setting(containerEl)
-      .setName(t('settings.content.keyStyle.name', this.lang))
-      .setDesc(t('settings.content.keyStyle.desc', this.lang))
-      .addDropdown(dropdown => {
-        Object.values(DefaultFrontmatterKeyType).forEach(value => {
-          dropdown.addOption(value, value);
-        });
-
-        dropdown
-          .setValue(this.plugin.settings.defaultFrontmatterKeyType)
-          .setDisabled(!this.plugin.settings.useDefaultFrontmatter)
-          .onChange(async value => {
-            this.plugin.settings.defaultFrontmatterKeyType = value as DefaultFrontmatterKeyType;
-            await this.plugin.saveSettings();
-          });
-      });
-
-    new Setting(containerEl)
-      .setName(t('settings.content.extraFm.name', this.lang))
-      .setDesc(t('settings.content.extraFm.desc', this.lang))
-      .addTextArea(text =>
-        text
-          .setPlaceholder(t('settings.content.extraFm.placeholder', this.lang))
-          .setValue(this.plugin.settings.frontmatter)
-          .onChange(async value => {
-            this.plugin.settings.frontmatter = value;
-            await this.plugin.saveSettings();
-          }),
-      );
-
-    new Setting(containerEl)
-      .setName(t('settings.content.body.name', this.lang))
-      .setDesc(t('settings.content.body.desc', this.lang))
-      .addTextArea(text =>
-        text
-          .setPlaceholder(t('settings.content.body.placeholder', this.lang))
-          .setValue(this.plugin.settings.content)
-          .onChange(async value => {
-            this.plugin.settings.content = value;
-            await this.plugin.saveSettings();
-          }),
-      );
+    });
   }
 }

@@ -23,14 +23,30 @@ https://github.com/user-attachments/assets/e19ee2d0-1c84-4092-87d9-ee2f84b636d1
 
 <br>
 
+## ネットワーク利用
+
+このプラグインは以下のリモートサービスに接続します。
+
+- **IGDB API** (`api.igdb.com`) — ゲームの検索とメタデータの取得に使用します。Twitch Client ID / Client Secret が必要です（下記参照）。
+- **Twitch OAuth** (`id.twitch.tv`) — Client ID / Client Secret を IGDB アクセストークンに交換します。認証情報はプラグインのデータファイルにローカル保存されます。
+- **DeepL API** (`api.deepl.com` / `api-free.deepl.com`) — 任意。有効にすると概要とストーリーを翻訳します。
+- **images.igdb.com** — 対応する設定を有効にすると、カバー画像とスクリーンショットをボールト内にダウンロードします。
+
+分析やテレメトリの収集は行いません。
+
+<br>
+
 ## インストール方法
 
-現時点では手動インストールです。
+Community plugins からインストールします。
 
-1. `VaultFolder/.obsidian/plugins/igdb-game-search/` を作成します。
-2. `manifest.json`、`main.js`、`styles.css` をそのフォルダにコピーします。
-3. Obsidian を再読み込みします。
-4. Community plugins で `IGDB Game Search` を有効化します。
+1. 設定 → Community plugins を開きます。
+2. `IGDB Game Search` を検索します。
+3. `インストール`、続けて `有効化` をクリックします。
+
+開発ビルドの場合は手動でインストールします。`manifest.json`、`main.js`、`styles.css` を `VaultFolder/.obsidian/plugins/igdb-game-search/` にコピーし、Obsidian を再読み込みして Community plugins で `IGDB Game Search` を有効化してください。
+
+Obsidian 1.13.0 以降が必要です。
 
 ![プラグインのインストールまたは有効化画面]()
 

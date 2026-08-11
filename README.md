@@ -23,14 +23,30 @@ Use IGDB API to get the game metadata.
 
 <br>
 
+## Network use
+
+The plugin talks to the following remote services:
+
+- **IGDB API** (`api.igdb.com`) — searches games and fetches game metadata. Requires a Twitch Client ID and Client Secret (see below).
+- **Twitch OAuth** (`id.twitch.tv`) — exchanges your Client ID / Client Secret for the IGDB access token. Credentials are stored locally in the plugin data file.
+- **DeepL API** (`api.deepl.com` / `api-free.deepl.com`) — optional; translates the summary and storyline when enabled.
+- **images.igdb.com** — downloads cover images and screenshots into your vault when the corresponding settings are enabled.
+
+No analytics or telemetry are collected.
+
+<br>
+
 ## How to install
 
-Currently, install it manually:
+Install from Community plugins:
 
-1. Create `VaultFolder/.obsidian/plugins/igdb-game-search/`.
-2. Copy `manifest.json`, `main.js`, and `styles.css` into the folder.
-3. Reload Obsidian.
-4. Enable `IGDB Game Search` in Community plugins.
+1. Open Settings → Community plugins.
+2. Search for `IGDB Game Search`.
+3. Click `Install`, then `Enable`.
+
+For development builds, install manually instead: copy `manifest.json`, `main.js`, and `styles.css` into `VaultFolder/.obsidian/plugins/igdb-game-search/`, reload Obsidian, and enable `IGDB Game Search` in Community plugins.
+
+Requires Obsidian 1.13.0 or later.
 
 <br>
 

@@ -13,7 +13,7 @@ const EXPECTED_VAULT_NAME = process.env.E2E_VAULT_NAME || '.vault';
 const SHOTS = process.env.E2E_SHOTS === '1';
 const BASE = `http://127.0.0.1:${PORT}`;
 
-const WebSocketCtor = window.WebSocket;
+const WebSocketCtor = globalThis.WebSocket;
 if (!WebSocketCtor) {
   console.log('FAIL driver requires Node with a global WebSocket (>= 22, or 20/21 with --experimental-websocket)');
   process.exit(1);
@@ -62,7 +62,7 @@ class CdpSession {
         returnByValue: true,
       }),
       new Promise((_, reject) =>
-        window.setTimeout(() => reject(new Error(`Runtime.evaluate timed out after ${EVAL_TIMEOUT_MS} ms`)), EVAL_TIMEOUT_MS),
+        setTimeout(() => reject(new Error(`Runtime.evaluate timed out after ${EVAL_TIMEOUT_MS} ms`)), EVAL_TIMEOUT_MS),
       ),
     ]);
     if (result.exceptionDetails) {
@@ -103,7 +103,7 @@ async function waitForCdp() {
     } catch {
       // not up yet
     }
-    await new Promise(r => window.setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 500));
   }
   throw new Error(
     `Obsidian is not running (no CDP endpoint on port ${PORT}). Start it with --remote-debugging-port=${PORT} (see e2e/run.sh).`,
@@ -133,14 +133,14 @@ async function findAppTarget() {
       }
       firstApp ||= targets[0];
     }
-    await new Promise(r => window.setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 500));
   }
   if (firstApp) return firstApp;
   throw new Error('app:// page target never appeared (vault may not be registered in obsidian.json)');
 }
 
 async function sleep(ms) {
-  return new Promise(r => window.setTimeout(r, ms));
+  return new Promise(r => setTimeout(r, ms));
 }
 
 // Poll an expression until it is truthy or the timeout elapses.

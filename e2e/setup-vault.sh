@@ -14,6 +14,8 @@ pnpm build
 mkdir -p "$PLUGIN_DIR"
 cp main.js manifest.json styles.css "$PLUGIN_DIR/"
 printf '["igdb-game-search"]\n' > "$VAULT_DIR/.obsidian/community-plugins.json"
+# Throwaway vault: start from default settings on every run.
+rm -f "$PLUGIN_DIR/data.json"
 
 # Register (or refresh) the vault in obsidian.json, preserving other vaults.
 CONFIG_FILE="$HOME/.config/obsidian/obsidian.json"

@@ -66,6 +66,8 @@ Run the driver standalone against an already-running instance:
 
 ```bash
 node e2e/driver.mjs        # expects CDP on 127.0.0.1:9222 (E2E_CDP_PORT)
+node e2e/settings-probe.mjs  # settings-tab probe: declarative rows, disabled
+                           # states, trimming, UI-language re-render
 ```
 
 ## What it verifies

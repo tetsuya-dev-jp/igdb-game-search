@@ -23,14 +23,30 @@ https://github.com/user-attachments/assets/e19ee2d0-1c84-4092-87d9-ee2f84b636d1
 
 <br>
 
+## 네트워크 사용
+
+이 플러그인은 다음 원격 서비스에 연결합니다.
+
+- **IGDB API** (`api.igdb.com`) — 게임 검색 및 메타데이터 조회에 사용합니다. Twitch Client ID / Client Secret 이 필요합니다(아래 참조).
+- **Twitch OAuth** (`id.twitch.tv`) — Client ID / Client Secret 을 IGDB 액세스 토큰으로 교환합니다. 자격 증명은 플러그인 데이터 파일에 로컬로 저장됩니다.
+- **DeepL API** (`api.deepl.com` / `api-free.deepl.com`) — 선택 사항. 활성화하면 요약과 스토리라인을 번역합니다.
+- **images.igdb.com** — 해당 설정을 활성화하면 표지 이미지와 스크린샷을 볼트에 다운로드합니다.
+
+분석 또는 텔레메트리 데이터는 수집하지 않습니다.
+
+<br>
+
 ## 설치 방법
 
-현재는 수동 설치 방식입니다.
+Community plugins 에서 설치합니다.
 
-1. `VaultFolder/.obsidian/plugins/igdb-game-search/` 폴더를 만듭니다.
-2. `manifest.json`, `main.js`, `styles.css` 를 해당 폴더에 복사합니다.
-3. Obsidian을 다시 불러옵니다.
-4. Community plugins에서 `IGDB Game Search` 를 활성화합니다.
+1. 설정 → Community plugins 를 엽니다.
+2. `IGDB Game Search` 를 검색합니다.
+3. `설치` 를 클릭한 다음 `활성화` 를 클릭합니다.
+
+개발 빌드는 수동으로 설치합니다. `manifest.json`, `main.js`, `styles.css` 를 `VaultFolder/.obsidian/plugins/igdb-game-search/` 폴더에 복사하고, Obsidian 을 다시 불러온 뒤 Community plugins 에서 `IGDB Game Search` 를 활성화하세요.
+
+Obsidian 1.13.0 이상이 필요합니다.
 
 <br>
 
