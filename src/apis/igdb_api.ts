@@ -2,16 +2,71 @@ import { ApiError, ConfigurationError, GameMetadataApi, apiRequest } from '@apis
 import { GameEntry } from '@models/game.model';
 import { GameSearchPluginSettings } from '@settings/settings';
 import { IgdbGame, TwitchAccessTokenResponse } from './models/igdb_response';
+import { resolveSteamAppId, steamStoreUrl } from './steam_api';
 
 const IGDB_GAMES_URL = 'https://api.igdb.com/v4/games';
 const TWITCH_TOKEN_URL = 'https://id.twitch.tv/oauth2/token';
 const SEARCH_LIMIT = 20;
+const TIME_TO_BEAT_URL = 'https://api.igdb.com/v4/game_time_to_beats';
+const timeToBeatCache = new Map<
+  number,
+  { expires: number; data: { main: number | ''; average: number | ''; completionist: number | '' } }
+>();
 
 export class IgdbApi implements GameMetadataApi {
   constructor(
     private readonly settings: GameSearchPluginSettings,
     private readonly saveSettings: () => Promise<void>,
   ) {}
+
+  async getTimeToBeat(
+    gameId: number,
+  ): Promise<{ main: number | ''; average: number | ''; completionist: number | '' }> {
+    const empty = { main: '', average: '', completionist: '' } as const;
+    if (!Number.isSafeInteger(gameId) || gameId <= 0) return empty;
+    const cached = timeToBeatCache.get(gameId);
+    if (cached && cached.expires > Date.now()) return cached.data;
+    try {
+      const data = await this.fetchTimeToBeat(gameId, false);
+      const secondsToHours = (seconds?: number): number | '' =>
+        typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0
+          ? Math.round((seconds / 3600) * 100) / 100
+          : '';
+      const row = data[0];
+      const result = row
+        ? {
+            main: secondsToHours(row.hastily),
+            average: secondsToHours(row.normally),
+            completionist: secondsToHours(row.completely),
+          }
+        : empty;
+      timeToBeatCache.set(gameId, { data: result, expires: Date.now() + 60 * 60 * 1000 });
+      return result;
+    } catch {
+      // Transient/auth failures must not hide data after credentials are fixed.
+      return empty;
+    }
+  }
+
+  private async fetchTimeToBeat(
+    gameId: number,
+    retrying: boolean,
+  ): Promise<Array<{ hastily?: number; normally?: number; completely?: number }>> {
+    const token = await this.ensureAccessToken();
+    try {
+      return await apiRequest(TIME_TO_BEAT_URL, {
+        method: 'POST',
+        headers: { 'Client-ID': this.settings.twitchClientId, Authorization: `Bearer ${token}` },
+        body: `fields game_id,hastily,normally,completely; where game_id = ${gameId}; limit 1;`,
+      });
+    } catch (error) {
+      if (!retrying && error instanceof ApiError && error.status === 401) {
+        await this.refreshAccessToken();
+        return this.fetchTimeToBeat(gameId, true);
+      }
+      throw error;
+    }
+  }
 
   async getByQuery(query: string): Promise<GameEntry[]> {
     const searchQuery = query.trim();
@@ -65,6 +120,7 @@ export class IgdbApi implements GameMetadataApi {
       'fields',
       [
         'name',
+        'id',
         'slug',
         'summary',
         'storyline',
@@ -91,6 +147,9 @@ export class IgdbApi implements GameMetadataApi {
         'cover.image_id',
         'screenshots.image_id',
         'websites.url',
+        'external_games.uid',
+        'external_games.url',
+        'external_games.external_game_source.name',
       ].join(','),
       ';',
       `search "${escapedQuery}";`,
@@ -112,8 +171,11 @@ export class IgdbApi implements GameMetadataApi {
     const screenshots = this.toImageUrls(game.screenshots, 't_screenshot_big_2x');
     const websites = this.toWebsiteUrls(game.websites);
     const firstReleaseDate = this.toReleaseDate(game.first_release_date);
+    const steamAppId = resolveSteamAppId(websites, game.external_games);
 
     return {
+      igdbId: game.id,
+      ...(steamAppId ? { steamAppId, steamStoreUrl: steamStoreUrl(websites, steamAppId) } : {}),
       title: game.name,
       alternativeTitle: this.joinList(alternativeTitles),
       alternativeTitles,

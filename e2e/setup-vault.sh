@@ -4,12 +4,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VAULT_DIR="e2e/.vault"
+VAULT_DIR="${E2E_VAULT_DIR:-e2e/.vault}"
 PLUGIN_DIR="$VAULT_DIR/.obsidian/plugins/igdb-game-search"
 # Fixed UUID so re-runs replace the same entry instead of multiplying them.
 VAULT_UUID="9a023e2e-0000-4000-8000-000000000023"
 
-pnpm build
+if [[ "${E2E_SKIP_BUILD:-0}" != "1" ]]; then
+  pnpm build
+fi
 
 mkdir -p "$PLUGIN_DIR"
 cp main.js manifest.json styles.css "$PLUGIN_DIR/"
@@ -18,11 +20,11 @@ printf '["igdb-game-search"]\n' > "$VAULT_DIR/.obsidian/community-plugins.json"
 rm -f "$PLUGIN_DIR/data.json"
 
 # Register (or refresh) the vault in obsidian.json, preserving other vaults.
-CONFIG_FILE="$HOME/.config/obsidian/obsidian.json"
+CONFIG_FILE="${E2E_CONFIG_DIR:-$HOME/.config/obsidian}/obsidian.json"
 mkdir -p "$(dirname "$CONFIG_FILE")"
 [[ -f "$CONFIG_FILE" ]] || printf '{}\n' > "$CONFIG_FILE"
 
-VAULT_PATH="$(pwd)/$VAULT_DIR"
+VAULT_PATH="$(realpath "$VAULT_DIR")"
 node -e '
 const fs = require("fs");
 const [configFile, uuid, vaultPath] = process.argv.slice(1);

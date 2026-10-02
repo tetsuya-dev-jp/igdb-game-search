@@ -5,6 +5,8 @@ import { CursorJumper } from '@utils/cursor_jumper';
 import { GameEntry } from '@models/game.model';
 import { DEFAULT_SETTINGS, GameSearchPluginSettings, GameSearchSettingTab } from '@settings/settings';
 import { DeepLApi } from '@apis/deepl_api';
+import { IgdbApi } from '@apis/igdb_api';
+import { SteamApi, resolveSteamAppId, steamStoreUrl } from '@apis/steam_api';
 import { withTimeout } from '@apis/base_api';
 import { t } from '@utils/i18n';
 import { applyTemplateTransformations, getTemplateContents, useTemplaterPluginInFile } from '@utils/template';
@@ -19,6 +21,40 @@ import {
 
 export default class GameSearchPlugin extends Plugin {
   settings: GameSearchPluginSettings;
+  private steamClient?: { profile: string; key: string; api: SteamApi };
+
+  private async enrichSteam(game: GameEntry): Promise<void> {
+    game.steamAppId ??= resolveSteamAppId(game.websites);
+    game.steamStoreUrl = steamStoreUrl(game.websites, game.steamAppId);
+    if (
+      !this.settings.enableSteam ||
+      !game.steamAppId ||
+      !this.settings.steamApiKeySecretName ||
+      !this.settings.steamProfile
+    ) {
+      this.steamClient = undefined;
+      return;
+    }
+    try {
+      const key = this.app.secretStorage?.getSecret(this.settings.steamApiKeySecretName);
+      if (!key) {
+        this.steamClient = undefined;
+        return;
+      }
+      const profile = this.settings.steamProfile.trim();
+      if (!this.steamClient || this.steamClient.profile !== profile || this.steamClient.key !== key) {
+        this.steamClient = { profile, key, api: new SteamApi(profile, key) };
+      }
+      const data = await this.steamClient.api.getGameData(game.steamAppId);
+      game.steamPlaytimeHours = data.playtimeHours;
+      game.steamAchievements = data.achievements;
+      game.steamAchievementsUnlocked = data.achieved;
+      game.steamAchievementsTotal = data.total;
+    } catch {
+      // Secret storage unavailable/locked: optional enrichment never blocks a note.
+      this.steamClient = undefined;
+    }
+  }
 
   onload(): void {
     void this.initialize();
@@ -110,7 +146,14 @@ export default class GameSearchPlugin extends Plugin {
   }
 
   async getRenderedContents(game: GameEntry) {
-    const localizedGame = await this.translateGameEntry(game);
+    const localizedGame = { ...(await this.translateGameEntry(game)) };
+    await this.enrichSteam(localizedGame);
+    if (this.settings.enableTimeToBeat && localizedGame.igdbId) {
+      const time = await new IgdbApi(this.settings, () => this.saveSettings()).getTimeToBeat(localizedGame.igdbId);
+      localizedGame.timeToBeatMain = time.main;
+      localizedGame.timeToBeatAverage = time.average;
+      localizedGame.timeToBeatCompletionist = time.completionist;
+    }
     const {
       templateFile,
       useDefaultFrontmatter,
@@ -130,6 +173,7 @@ export default class GameSearchPlugin extends Plugin {
       if (coverImageUrl) {
         const imageName = makeFileName(localizedGame, this.settings.fileNameFormat, 'jpg');
         localizedGame.localCoverImage = await this.downloadAndSaveImage(imageName, coverImagePath, coverImageUrl);
+        localizedGame.localCoverWikilink = localizedGame.localCoverImage ? `[[${localizedGame.localCoverImage}]]` : '';
       }
     }
 
@@ -138,6 +182,7 @@ export default class GameSearchPlugin extends Plugin {
       const localScreenshots = await this.downloadAndSaveImages(localizedGame.screenshots ?? [], screenshotDirectory);
       localizedGame.localScreenshots = localScreenshots;
       localizedGame.localScreenshot = localScreenshots.join(', ');
+      localizedGame.firstScreenshotWikilink = localScreenshots[0] ? `[[${localScreenshots[0]}]]` : '';
     }
 
     if (templateFile) {

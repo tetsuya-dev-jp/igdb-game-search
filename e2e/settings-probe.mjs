@@ -50,7 +50,7 @@ class CdpSession {
 
   async evaluate(expression) {
     const result = await Promise.race([
-      this.send('Runtime.evaluate', { expression, returnByValue: true }),
+      this.send('Runtime.evaluate', {         expression, returnByValue: true, awaitPromise: true }),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`Runtime.evaluate timed out after ${EVAL_TIMEOUT_MS} ms`)), EVAL_TIMEOUT_MS),
       ),
@@ -113,7 +113,12 @@ async function findWindow(titlePrefix) {
     const targets = (await listTargets()).filter(t => t.type === 'page');
     for (const target of targets) {
       if (titlePrefix) {
-        if (target.title.startsWith(titlePrefix)) return target;
+        // The settings window title follows Obsidian's language, not the
+        // plugin's language. Detect its actual sidebar instead of English.
+        const session = await connectTarget(target);
+        try {
+          if (target.title.includes(EXPECTED_VAULT_NAME) && await session.evaluate(`!!document.querySelector('.vertical-tab-nav-item')`)) return target;
+        } finally { session.close(); }
       } else if (target.url.startsWith('app://')) {
         const session = await connectTarget(target);
         try {
@@ -171,6 +176,10 @@ async function main() {
     const p = app.plugins.plugins['igdb-game-search'];
     p.settings.uiLanguage = 'en';
     p.settings.enableTranslation = false;
+    p.settings.enableTimeToBeat = false;
+    p.settings.enableSteam = false;
+    p.settings.steamProfile = '';
+    p.settings.steamApiKeySecretName = '';
     p.settings.enableScreenshotSave = false;
     p.settings.useDefaultFrontmatter = true;
     p.settings.folder = '';
@@ -205,9 +214,9 @@ async function main() {
   })()`);
   await poll(settings, `${CONTENT} && ${CONTENT}.querySelectorAll('.setting-item').length > 15`, POLL_TIMEOUT_MS, 'settings rows to render');
   await sleep(400);
-  await settings.screenshot('e2e/.cache/shots/settings-declarative.png');
+  await settings.screenshot(`${process.env.E2E_REPORT_DIR || 'docs/verification/issues-2-4'}/settings-declarative.png`);
 
-  // 19 settings rows + 6 group headings.
+  // 23 settings rows + 7 group headings.
   const summary = await settings.evaluate(`(() => {
     const content = ${CONTENT};
     const items = [...content.querySelectorAll('.setting-item')];
@@ -225,9 +234,9 @@ async function main() {
       fileNameSearch,
     };
   })()`);
-  summary.rows === 19 ? pass(`19 settings rows (got ${summary.rows})`) : fail('row count', JSON.stringify(summary));
-  summary.headings === 6 ? pass('6 group headings') : fail('heading count', JSON.stringify(summary));
-  summary.toggles === 6 ? pass('6 toggles') : fail('toggle count', JSON.stringify(summary));
+  summary.rows === 23 ? pass(`23 settings rows (got ${summary.rows})`) : fail('row count', JSON.stringify(summary));
+  summary.headings === 7 ? pass('7 group headings') : fail('heading count', JSON.stringify(summary));
+  summary.toggles === 8 ? pass('8 toggles') : fail('toggle count', JSON.stringify(summary));
   summary.selects === 3 ? pass('3 dropdowns') : fail('dropdown count', JSON.stringify(summary));
   summary.passwords === 2 ? pass('2 password inputs (client secret, DeepL key)') : fail('password count', JSON.stringify(summary));
   summary.fileNameHint ? pass('file-name preview hint rendered') : fail('file-name preview hint missing', '');
@@ -257,6 +266,39 @@ async function main() {
   state.coverFolderEnabled ? pass('cover image folder enabled by default') : fail('cover folder should start enabled', '');
   state.locationIsTextInput ? pass('new file location renders a folder input') : fail('location input mismatch', '');
   state.templateIsFilePicker ? pass('template file renders the native file picker') : fail('template file picker missing', '');
+
+  // New optional enrichment settings are exercised through the real UI.
+  const steamState = await settings.evaluate(`(() => {
+    const content = ${CONTENT}; const row = ${FIND_ROW};
+    return { profileDisabled: row('Steam profile')?.querySelector('input')?.disabled,
+      secretPicker: !!row('Steam API key')?.querySelector('button') };
+  })()`);
+  steamState.profileDisabled ? pass('Steam profile disabled by default') : fail('Steam profile initial gate', JSON.stringify(steamState));
+  steamState.secretPicker ? pass('Steam key uses native secret picker, not plaintext/password input') : fail('Steam secret picker missing', JSON.stringify(steamState));
+  await settings.evaluate(`${findRow('Fetch time to beat')}.querySelector('.checkbox-container').click()`);
+  await sleep(400);
+  const timeEnabled = await page.evaluate(`app.plugins.plugins['igdb-game-search'].settings.enableTimeToBeat`);
+  timeEnabled ? pass('time-to-beat toggle persists') : fail('time-to-beat toggle', 'not persisted');
+  await settings.evaluate(`${findRow('Enable Steam integration')}.querySelector('.checkbox-container').click()`);
+  await sleep(400);
+  const profileEnabled = await settings.evaluate(`${findRow('Steam profile')}.querySelector('input').disabled === false`);
+  profileEnabled ? pass('Steam toggle enables profile control') : fail('Steam profile gate', 'not enabled');
+  await settings.evaluate(`(() => {
+    const input = ${findRow('Steam profile')}.querySelector('input');
+    input.value = '  https://steamcommunity.com/id/e2e-example/  ';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    input.dispatchEvent(new Event('change',{bubbles:true}));
+  })()`);
+  await sleep(400);
+  const profile = await page.evaluate(`app.plugins.plugins['igdb-game-search'].settings.steamProfile`);
+  profile === 'https://steamcommunity.com/id/e2e-example/' ? pass('Steam profile trimmed and persisted') : fail('Steam profile save', JSON.stringify(profile));
+  const stored = await page.evaluate(`(async () => {
+    const p=app.plugins.plugins['igdb-game-search']; await p.saveSettings();
+    const data=await p.loadData(); return {enableTimeToBeat:data.enableTimeToBeat,enableSteam:data.enableSteam,
+      hasPlainKey:Object.hasOwn(data,'steamApiKey'), secretName:data.steamApiKeySecretName};
+  })()`);
+  stored.enableTimeToBeat && stored.enableSteam && !stored.hasPlainKey && stored.secretName === ''
+    ? pass('data.json stores toggles and secret identifier only') : fail('Steam settings storage', JSON.stringify(stored));
 
   // Toggle "Enable translation": the target dropdown and DeepL key must enable.
   await settings.evaluate(`(() => {
@@ -305,7 +347,7 @@ async function main() {
   jaPersisted === 'ja' && ja.hasJapanese
     ? pass('UI language switch persisted and re-rendered in Japanese')
     : fail('UI language re-render', JSON.stringify({ jaPersisted, ...ja }));
-  await settings.screenshot('e2e/.cache/shots/settings-ja.png');
+  await settings.screenshot(`${process.env.E2E_REPORT_DIR || 'docs/verification/issues-2-4'}/settings-ja.png`);
 
   // Switch back to English and restore the default feature state so the
   // standard driver smoke test can run after this probe.
@@ -321,6 +363,10 @@ async function main() {
   await page.evaluate(`(() => {
     const p = app.plugins.plugins['igdb-game-search'];
     p.settings.enableTranslation = false;
+    p.settings.enableTimeToBeat = false;
+    p.settings.enableSteam = false;
+    p.settings.steamProfile = '';
+    p.settings.steamApiKeySecretName = '';
     p.settings.folder = '';
     p.saveSettings();
     return true;

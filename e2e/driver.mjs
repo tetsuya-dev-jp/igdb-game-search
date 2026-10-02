@@ -691,7 +691,7 @@ async function main() {
   // Optional screenshot for manual inspection.
   if (SHOTS) {
     const fs = await import('node:fs');
-    const shotsDir = 'e2e/.cache/shots';
+    const shotsDir = process.env.E2E_SHOT_DIR || `${process.env.TMPDIR || '/tmp'}/igdb-e2e-shots`;
     fs.mkdirSync(shotsDir, { recursive: true });
     await session.send('Page.enable');
     const { data } = await session.send('Page.captureScreenshot', { format: 'png' });

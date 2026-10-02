@@ -1,0 +1,41 @@
+{
+  "provenance": "Issue #4 metadata reproduction; cover from public IGDB game page; screenshots and summary from public Steam Store appdetails API. Not an authenticated IGDB response. totalRatingCount=333 is the issue reproduction fixture, not current data. No personal Steam data.",
+  "game": {
+    "title": "Resident Evil Requiem",
+    "genres": [
+      "Shooter",
+      "Puzzle",
+      "Adventure"
+    ],
+    "genre": "Shooter, Puzzle, Adventure",
+    "platforms": [
+      "Xbox Series X|S",
+      "Nintendo Switch 2",
+      "PC (Microsoft Windows)",
+      "PlayStation 5"
+    ],
+    "platform": "Xbox Series X|S, Nintendo Switch 2, PC (Microsoft Windows), PlayStation 5",
+    "developers": [
+      "Capcom Development Division 1"
+    ],
+    "developer": "Capcom Development Division 1",
+    "publishers": [
+      "Capcom"
+    ],
+    "publisher": "Capcom",
+    "firstReleaseDate": "2026-02-27",
+    "totalRatingCount": 333,
+    "igdbUrl": "https://www.igdb.com/games/resident-evil-requiem",
+    "websites": [
+      "https://www.residentevil.com/requiem/en-us/",
+      "https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/"
+    ],
+    "website": "https://www.residentevil.com/requiem/en-us/, https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/",
+    "coverUrl": "https://images.igdb.com/igdb/image/upload/t_cover_big/cobmj0.jpg",
+    "screenshots": [
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3764200/08af4e9398b8e45152bfbedce3bc24d22e2c0990/ss_08af4e9398b8e45152bfbedce3bc24d22e2c0990.1920x1080.jpg?t=1779840172",
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3764200/4921eb5fb45f6b7a3b62195e47c6d7b4175935a8/ss_4921eb5fb45f6b7a3b62195e47c6d7b4175935a8.1920x1080.jpg?t=1779840172"
+    ],
+    "summary": "Requiem for the dead. Nightmare for the living. Prepare to escape death in a heart-stopping experience that will chill you to your core."
+  }
+}

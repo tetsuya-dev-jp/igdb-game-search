@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## Unreleased
+
+### Features
+
+- Add optional IGDB time-to-beat and Steam profile enrichment settings (#2, #3).
+- Add structured array aliases, safe first/join/JSON/YAML filters, local image wikilinks, and the Resident Evil Requiem Templater recipe (#4).
+- Support Templater 2.25 per-vault auto-trigger settings without executing scripts twice.
+- Add isolated headless/native Obsidian E2E coverage for settings, note creation, image downloads, and both Templater trigger modes.
+- Preserve existing CSV interpolation and default frontmatter behavior; no migration required.
+
 ## [0.5.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.4.0...0.5.0) (2026-08-11)
 
 

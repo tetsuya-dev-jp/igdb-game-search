@@ -31,6 +31,7 @@ The plugin talks to the following remote services:
 - **Twitch OAuth** (`id.twitch.tv`) — exchanges your Client ID / Client Secret for the IGDB access token. Credentials are stored locally in the plugin data file.
 - **DeepL API** (`api.deepl.com` / `api-free.deepl.com`) — optional; translates the summary and storyline when enabled.
 - **images.igdb.com** — downloads cover images and screenshots into your vault when the corresponding settings are enabled.
+- **Steam Web API** (`api.steampowered.com`) — contacted only when Steam integration is enabled; retrieves public game details and achievements for the configured profile. No HowLongToBeat service is contacted.
 
 No analytics or telemetry are collected.
 
@@ -108,6 +109,33 @@ Choose the plugin UI language.
 Enter your Twitch `Client ID` and `Client Secret` in the plugin settings.
 
 The plugin uses these credentials to get an IGDB access token automatically.
+
+### Fetch time to beat
+
+When enabled, fetches IGDB's time-to-beat estimates for the selected game. IGDB's `hastily` value maps to `main` (credits without notable extras), `normally` to `average` (some extras), and `completely` to `completionist`. Values are converted from seconds to hours with two decimal places. IGDB is the only source: no compliant public HowLongToBeat API is established, so the plugin does not scrape the site or use private-token workarounds. Missing estimates are blank. Complete results, including misses, are cached for one hour; transient failures are not cached.
+
+### Steam integration
+
+Enable **Enable Steam integration** to fetch public game details and achievements for the selected game (not for every search result). Create a Steam Web API key at <https://steamcommunity.com/dev/apikey>, add it to Obsidian Secret Storage, then select its secret name in **Steam API key**. The key value is never stored in `data.json`. Set **Steam profile** to a 17-digit SteamID64, `https://steamcommunity.com/id/<vanity>/`, or `https://steamcommunity.com/profiles/<SteamID64>/`. The profile must be public, and its game details and achievements must be visible. With no key, a private profile, or no game data, the Steam fields are blank or empty arrays. When integration is disabled, no Steam data is requested or sent.
+
+#### New enrichment UI strings
+
+Every key below is present in English, Japanese, and Korean locale maps.
+
+| Locale key | English UI string |
+| --- | --- |
+| `settings.timeToBeat.name` | Fetch time to beat |
+| `settings.timeToBeat.desc` | Fetch IGDB time-to-beat estimates for the selected game. |
+| `settings.steam.header` | Steam |
+| `settings.steam.enable.name` | Enable Steam integration |
+| `settings.steam.enable.desc` | Fetch playtime and achievements for the selected game. |
+| `settings.steam.key.name` | Steam API key |
+| `settings.steam.key.desc` | Choose a key stored in Obsidian Secret Storage. The key value is never saved in plugin settings. |
+| `settings.steam.key.unavailable` | Secret Storage is unavailable in this Obsidian version. |
+| `settings.steam.profile.name` | Steam profile |
+| `settings.steam.profile.desc` | Enter a SteamID64, a /profiles/SteamID64 URL, or an /id/vanity URL on steamcommunity.com. |
+
+Steam game/achievement results and vanity lookups are cached in memory for one hour, including empty API results; transient request failures are retried on the next note. Changing the selected secret value or profile resets the client cache. Closing/reloading the plugin discards the cache. No HowLongToBeat requests are made.
 
 ### New file location
 
@@ -270,6 +298,20 @@ Write `{{name}}` in your template and replace `name` with the desired field.
 | `localScreenshot`       | Comma-separated local screenshot paths                       |
 | `localScreenshots`      | Local screenshot path array                                  |
 | `localCoverImage`       | Local path of the downloaded cover image                     |
+| `timeToBeatMain`        | IGDB main-story estimate in hours (two decimals)              |
+| `timeToBeatAverage`     | IGDB estimate including some extras, in hours                 |
+| `timeToBeatCompletionist` | IGDB completionist estimate in hours                         |
+| `timeToBeatList`        | JSON array `[main, average, completionist]`                    |
+| `timeToBeat`            | JSON object with `main`, `average`, and `completionist`        |
+| `steamAppId`            | Steam application ID                                           |
+| `steamStoreUrl`         | Steam store URL                                                |
+| `steamPlaytimeHours`    | Public Steam playtime in hours                                 |
+| `steamAchievements`     | JSON array of `{apiname, achieved, unlocktime}` objects        |
+| `steamAchievementsUnlocked` | Number of unlocked achievements                            |
+| `steamAchievementsTotal` | Total number of achievements                                  |
+| `platformsList`, `genresList`, `developersList`, `publishersList`, `screenshotsList`, `websitesList` | JSON array literals |
+| `alternativeTitlesList`, `themesList`, `gameModesList`, `playerPerspectivesList`, `similarGamesList`, `localScreenshotsList` | JSON array literals |
+| `localCoverWikilink`, `firstScreenshotWikilink` | Vault-relative wikilinks using full paths |
 
 <br>
 
@@ -280,6 +322,50 @@ Write `{{name}}` in your template and replace `name` with the desired field.
 - This plugin replaces `{{variables}}` and date placeholders, but it no longer executes custom `<%= ... %>` expressions.
 - Use the Templater plugin for loops, conditions, or any other scripting inside templates.
 - If you want to render screenshots or add conditional sections, use Templater on top of the generated metadata.
+- Native filters support YAML-safe arrays (`{{genres|yaml}}`), the first string (`{{developers|first}}`), custom separators (`{{genres|join: / }}`), chained filters (`{{developers|first|yaml}}`), and safe scalar quoting (`{{title|yaml}}`). Raw `{{title}}` intentionally emits an unquoted value.
+
+#### Native YAML template
+
+```yaml
+---
+title: {{title|yaml}}
+genres: {{genres|yaml}}
+platforms: {{platforms|yaml}}
+developers: {{developers|yaml}}
+steam: {{steamStoreUrl|yaml}}
+---
+```
+
+#### Templater recipe
+
+This reproduces the Resident Evil Requiem cleanup in #4. The legacy property name `Metacritic` below contains `totalRatingCount` (IGDB vote count), **not** a Metacritic score; rename it to `RatingVotes` in a new template.
+
+The following `<%*` script uses JSON array literals supplied by the plugin. It emits YAML block lists, full-path wikilinks, safe first-name scalars, and optional Steam URL without evaluating raw game text as Templater code.
+
+```md
+<%*
+const genres = {{genresList}};
+const platforms = {{platformsList}};
+const title = {{title|json}};
+const developer = {{developers|first|json}};
+const publisher = {{publishers|first|json}};
+const cover = {{localCoverWikilink|json}};
+const backdrop = {{firstScreenshotWikilink|json}};
+const steamUrl = {{steamStoreUrl|json}};
+const date = {{firstReleaseDate|json}};
+const rating = {{totalRatingCount|json}};
+const quote = value => JSON.stringify(String(value ?? ''));
+const scalar = value => {
+  const text = String(value ?? '');
+  return /^[\p{L}\p{N}_./ -]+$/u.test(text) && !/^(?:null|true|false|yes|no|on|off|[-+]?\d+(?:\.\d*)?)$/i.test(text)
+    ? text : quote(text);
+};
+const list = values => values.length ? '\n' + values.map(value => `  - ${quote(value)}`).join('\n') : ' []';
+tR += `---\nTitle: ${scalar(title)}\nCover: ${quote(cover)}\nBackdrop: ${quote(backdrop)}\nPlatform:${list(platforms)}\nDeveloper: ${scalar(developer)}\nPublisher: ${scalar(publisher)}\nGenre:${list(genres)}\nReleaseDate: ${scalar(date)}\nMetacritic: ${typeof rating === 'number' ? rating : quote(rating)}\nStoreUrl: ${steamUrl || '""'}\n---\n\n# ${title}\n`;
+%>
+```
+
+Use JSON-encoded aliases for scalar values (`{{title|json}}`) and the actual JSON array aliases inline (for example `const genres = {{genresList}};`). This preserves quotes and backslashes and prevents data from becoming executable Templater syntax. The plugin's existing auto-trigger behavior is unchanged; do not add a second execution trigger.
 
 ## Development
 
