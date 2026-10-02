@@ -24,7 +24,15 @@ export interface IgdbWebsite {
   url: string;
 }
 
+export interface IgdbExternalGame {
+  uid?: string;
+  url?: string;
+  external_game_source?: { name?: string };
+  category?: number;
+}
+
 export interface IgdbGame {
+  id?: number;
   name: string;
   slug?: string;
   summary?: string;
@@ -50,6 +58,7 @@ export interface IgdbGame {
   cover?: IgdbImage;
   screenshots?: IgdbImage[];
   websites?: IgdbWebsite[];
+  external_games?: IgdbExternalGame[];
 }
 
 export interface TwitchAccessTokenResponse {

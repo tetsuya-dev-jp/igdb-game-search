@@ -1,6 +1,6 @@
 import { replaceDateInString } from '@utils/utils';
 import { AUTO_TRANSLATION_LANGUAGE, DEEPL_TARGET_LANGUAGES } from '@utils/deepl_languages';
-import { App, PluginSettingTab, Setting, SettingDefinitionItem } from 'obsidian';
+import { App, PluginSettingTab, SecretComponent, Setting, SettingDefinitionItem } from 'obsidian';
 import { t } from '@utils/i18n';
 import GameSearchPlugin from '../main';
 import { FileNameFormatSuggest } from './suggesters/FileNameFormatSuggester';
@@ -31,6 +31,10 @@ export interface GameSearchPluginSettings {
   enableScreenshotSave: boolean;
   screenshotImagePath: string;
   enableTranslation: boolean;
+  enableTimeToBeat: boolean;
+  enableSteam: boolean;
+  steamApiKeySecretName: string;
+  steamProfile: string;
   translationTargetLanguage: string;
   deeplApiKey: string;
   uiLanguage: string;
@@ -55,6 +59,10 @@ export const DEFAULT_SETTINGS: GameSearchPluginSettings = {
   enableScreenshotSave: false,
   screenshotImagePath: '',
   enableTranslation: false,
+  enableTimeToBeat: false,
+  enableSteam: false,
+  steamApiKeySecretName: '',
+  steamProfile: '',
   translationTargetLanguage: AUTO_TRANSLATION_LANGUAGE,
   deeplApiKey: '',
   uiLanguage: 'auto',
@@ -79,6 +87,8 @@ const TRIMMED_SETTING_KEYS = new Set<string>([
   'coverImagePath',
   'screenshotImagePath',
   'deeplApiKey',
+  'steamApiKeySecretName',
+  'steamProfile',
 ]);
 
 export class GameSearchSettingTab extends PluginSettingTab {
@@ -156,6 +166,32 @@ export class GameSearchSettingTab extends PluginSettingTab {
             name: t('settings.igdb.clientSecret.name', lang),
             desc: t('settings.igdb.clientSecret.desc', lang),
             render: setting => this.renderSecret(setting, 'twitchClientSecret', '', false),
+          },
+          {
+            name: t('settings.timeToBeat.name', lang),
+            desc: t('settings.timeToBeat.desc', lang),
+            control: { type: 'toggle', key: 'enableTimeToBeat' },
+          },
+        ],
+      },
+      {
+        type: 'group',
+        heading: t('settings.steam.header', lang),
+        items: [
+          {
+            name: t('settings.steam.enable.name', lang),
+            desc: t('settings.steam.enable.desc', lang),
+            control: { type: 'toggle', key: 'enableSteam' },
+          },
+          {
+            name: t('settings.steam.key.name', lang),
+            desc: t('settings.steam.key.desc', lang),
+            render: setting => this.renderSteamSecret(setting),
+          },
+          {
+            name: t('settings.steam.profile.name', lang),
+            desc: t('settings.steam.profile.desc', lang),
+            control: { type: 'text', key: 'steamProfile', disabled: () => !settings.enableSteam },
           },
         ],
       },
@@ -309,7 +345,12 @@ export class GameSearchSettingTab extends PluginSettingTab {
       return;
     }
 
-    if (key === 'enableTranslation' || key === 'enableScreenshotSave' || key === 'useDefaultFrontmatter') {
+    if (
+      key === 'enableTranslation' ||
+      key === 'enableScreenshotSave' ||
+      key === 'useDefaultFrontmatter' ||
+      key === 'enableSteam'
+    ) {
       await super.setControlValue(key, value);
       // These toggles gate the disabled state of sibling settings; a full
       // re-render refreshes both the declarative predicates and the
@@ -384,5 +425,19 @@ export class GameSearchSettingTab extends PluginSettingTab {
           await this.setControlValue(key, value);
         });
     });
+  }
+
+  private renderSteamSecret(setting: Setting): void {
+    const lang = this.lang;
+    if (typeof SecretComponent !== 'function') {
+      setting.addText(text => text.setPlaceholder(t('settings.steam.key.unavailable', lang)).setDisabled(true));
+      return;
+    }
+    new SecretComponent(this.app, setting.controlEl)
+      .setValue(this.plugin.settings.steamApiKeySecretName)
+      .onChange(secretIdentifier => {
+        this.plugin.settings.steamApiKeySecretName = secretIdentifier.trim();
+        void this.plugin.saveSettings();
+      });
   }
 }

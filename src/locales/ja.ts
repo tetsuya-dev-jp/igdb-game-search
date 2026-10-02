@@ -29,6 +29,18 @@ export const ja: Partial<Record<I18nKey, string>> = {
   'settings.igdb.clientId.desc': 'ゲームメタデータ取得用のアクセストークンを要求するために使用します。',
   'settings.igdb.clientSecret.name': 'Twitch Client Secret',
   'settings.igdb.clientSecret.desc': 'プラグインデータとしてローカルに保存され、アクセストークンの更新に使用されます。',
+  'settings.timeToBeat.name': 'クリア時間を取得',
+  'settings.timeToBeat.desc': '選択したゲームのクリア時間の目安を IGDB から取得します。',
+  'settings.steam.header': 'Steam',
+  'settings.steam.enable.name': 'Steam 連携を有効にする',
+  'settings.steam.enable.desc': '選択したゲームのプレイ時間と実績を取得します。',
+  'settings.steam.key.name': 'Steam API キー',
+  'settings.steam.key.desc':
+    'Obsidian の Secret Storage に保存したキーを選択します。キーの値はプラグイン設定に保存されません。',
+  'settings.steam.key.unavailable': 'この Obsidian バージョンでは Secret Storage を利用できません。',
+  'settings.steam.profile.name': 'Steam プロフィール',
+  'settings.steam.profile.desc':
+    'SteamID64 または steamcommunity.com の /profiles/SteamID64・/id/vanity の URL を入力します。',
   'settings.translation.header': '翻訳',
   'settings.translation.enable.name': '翻訳を有効にする',
   'settings.translation.enable.desc': 'ノート内容を書き込む前に、概要とストーリーを翻訳します。',

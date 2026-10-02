@@ -1,5 +1,6 @@
 import { FrontMatter, GameEntry } from '@models/game.model';
 import { DefaultFrontmatterKeyType } from '@settings/settings';
+import { renderGameVariables, templateString } from './template_values';
 
 export const NUMBER_REGEX = /^-?[0-9]*$/;
 export const DATE_REGEX = /{{DATE([+-]?\d+)?}}/;
@@ -23,9 +24,7 @@ export function makeScreenshotFileName(index: number, extension = 'jpg') {
 }
 
 export function changeSnakeCase(game: GameEntry) {
-  return (Object.entries(game) as [string, string | string[] | number | undefined][]).reduce<
-    Record<string, string | string[] | number | undefined>
-  >((acc, [key, value]) => {
+  return Object.entries(game).reduce<Record<string, unknown>>((acc, [key, value]) => {
     acc[camelToSnakeCase(key)] = value;
     return acc;
   }, {});
@@ -35,15 +34,15 @@ export function applyDefaultFrontMatter(
   game: GameEntry,
   frontmatter: FrontMatter | string,
   keyType: DefaultFrontmatterKeyType = DefaultFrontmatterKeyType.snakeCase,
-): Record<string, string | string[] | number | undefined> {
-  const frontMatter: Record<string, string | string[] | number | undefined> =
+): Record<string, unknown> {
+  const frontMatter: Record<string, unknown> =
     keyType === DefaultFrontmatterKeyType.camelCase ? { ...game } : changeSnakeCase(game);
   const extraFrontMatter = typeof frontmatter === 'string' ? parseFrontMatter(frontmatter) : frontmatter;
 
   for (const key in extraFrontMatter) {
     const value = extraFrontMatter[key]?.toString().trim() ?? '';
     if (frontMatter[key] && frontMatter[key] !== value) {
-      frontMatter[key] = `${String(frontMatter[key])}, ${value}`;
+      frontMatter[key] = `${templateString(frontMatter[key])}, ${value}`;
     } else {
       frontMatter[key] = value;
     }
@@ -57,20 +56,7 @@ export function replaceVariableSyntax(game: GameEntry, text: string): string {
     return '';
   }
 
-  const entries = Object.entries(game);
-  const keys = Object.keys(game);
-  const substituted = entries.reduce(
-    (result, [key, val = '']) => result.replace(new RegExp(`{{${key}}}`, 'ig'), () => String(val ?? '')),
-    text,
-  );
-
-  // Strip only known GameEntry placeholders that failed to substitute (empty values);
-  // unknown {{word}} placeholders (user template syntax) are preserved verbatim.
-  if (!keys.length) {
-    return substituted.trim();
-  }
-
-  return substituted.replace(new RegExp(`{{(?:${keys.join('|')})}}`, 'ig'), '').trim();
+  return renderGameVariables(game, text).trim();
 }
 
 export function camelToSnakeCase(str: string) {
@@ -97,10 +83,11 @@ export function parseFrontMatter(frontMatterString: string) {
     }, {});
 }
 
-export function toStringFrontMatter(frontMatter: Record<string, string | string[] | number | undefined>): string {
+export function toStringFrontMatter(frontMatter: Record<string, unknown>): string {
   return Object.entries(frontMatter)
     .map(([key, value]) => {
-      const newValue = (value == null ? '' : String(value)).trim();
+      if (value && typeof value === 'object' && !Array.isArray(value)) return `${key}: ${JSON.stringify(value)}\n`;
+      const newValue = templateString(value).trim();
       const emitLine = (line: string): string => {
         if (/:\s/.test(line)) {
           return `${key}: "${line.replace(/"/g, '\\"')}"\n`;

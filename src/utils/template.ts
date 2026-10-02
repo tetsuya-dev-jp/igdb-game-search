@@ -1,5 +1,7 @@
 import { App, moment, normalizePath, Notice, TFile } from 'obsidian';
 import { t } from '@utils/i18n';
+import { GameEntry } from '@models/game.model';
+import { renderGameVariables } from './template_values';
 
 export async function getTemplateContents(app: App, templatePath: string | undefined): Promise<string> {
   const { metadataCache, vault } = app;
@@ -18,8 +20,8 @@ export async function getTemplateContents(app: App, templatePath: string | undef
   }
 }
 
-export function applyTemplateTransformations(rawTemplateContents: string): string {
-  return rawTemplateContents.replace(
+export function applyTemplateTransformations(rawTemplateContents: string, game?: object): string {
+  const withDates = rawTemplateContents.replace(
     /{{\s*(date|time)\s*(([+-]\d+)([yqmwdhs]))?\s*(:.+?)?}}/gi,
     (
       _substring,
@@ -39,11 +41,12 @@ export function applyTemplateTransformations(rawTemplateContents: string): strin
       return _timeOrDate.toLowerCase() === 'time' ? currentDate.format('HH:mm:ss') : currentDate.format('YYYY-MM-DD');
     },
   );
+  return game ? renderGameVariables(game as GameEntry, withDates) : withDates;
 }
 
 interface TemplaterPluginInstance {
-  settings: {
-    trigger_on_file_creation: boolean;
+  settings?: {
+    trigger_on_file_creation?: boolean;
   };
   templater: {
     overwrite_file_commands(file: TFile): Promise<void>;
@@ -56,10 +59,7 @@ function isTemplaterPluginInstance(value: unknown): value is TemplaterPluginInst
   }
 
   const candidate = value as Partial<TemplaterPluginInstance>;
-  return (
-    typeof candidate.settings?.trigger_on_file_creation === 'boolean' &&
-    typeof candidate.templater?.overwrite_file_commands === 'function'
-  );
+  return typeof candidate.templater?.overwrite_file_commands === 'function';
 }
 
 export async function useTemplaterPluginInFile(app: App, file: TFile): Promise<void> {
@@ -71,7 +71,17 @@ export async function useTemplaterPluginInFile(app: App, file: TFile): Promise<v
     }
   ).plugins?.plugins?.['templater-obsidian'];
 
-  if (isTemplaterPluginInstance(templaterPlugin) && !templaterPlugin.settings.trigger_on_file_creation) {
+  if (!isTemplaterPluginInstance(templaterPlugin)) return;
+  const legacyTrigger = templaterPlugin.settings?.trigger_on_file_creation;
+  // Templater 2.25 moved security-sensitive flags to per-vault local storage.
+  const localSettings: unknown =
+    typeof legacyTrigger === 'boolean' ? undefined : app.loadLocalStorage?.('templater-local-settings');
+  const modernTrigger =
+    !!localSettings &&
+    typeof localSettings === 'object' &&
+    'trigger_on_file_creation' in localSettings &&
+    localSettings.trigger_on_file_creation === true;
+  if (!(legacyTrigger ?? modernTrigger)) {
     await templaterPlugin.templater.overwrite_file_commands(file);
   }
 }

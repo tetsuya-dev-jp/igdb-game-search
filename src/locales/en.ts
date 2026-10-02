@@ -27,6 +27,18 @@ export const en = {
   'settings.igdb.clientId.desc': 'Used to request an access token for game metadata.',
   'settings.igdb.clientSecret.name': 'Twitch client secret',
   'settings.igdb.clientSecret.desc': 'Stored locally in plugin data and used to refresh the access token.',
+  'settings.timeToBeat.name': 'Fetch time to beat',
+  'settings.timeToBeat.desc': 'Fetch IGDB time-to-beat estimates for the selected game.',
+  'settings.steam.header': 'Steam',
+  'settings.steam.enable.name': 'Enable Steam integration',
+  'settings.steam.enable.desc': 'Fetch playtime and achievements for the selected game.',
+  'settings.steam.key.name': 'Steam API key',
+  'settings.steam.key.desc':
+    'Choose a key stored in Obsidian Secret Storage. The key value is never saved in plugin settings.',
+  'settings.steam.key.unavailable': 'Secret Storage is unavailable in this Obsidian version.',
+  'settings.steam.profile.name': 'Steam profile',
+  'settings.steam.profile.desc':
+    'Enter a SteamID64, a /profiles/SteamID64 URL, or an /id/vanity URL on steamcommunity.com.',
   'settings.translation.header': 'Translation',
   'settings.translation.enable.name': 'Enable translation',
   'settings.translation.enable.desc': 'Translate the summary and storyline before rendering note content.',

@@ -29,6 +29,18 @@ export const ko: Partial<Record<I18nKey, string>> = {
   'settings.igdb.clientId.desc': '게임 메타데이터용 액세스 토큰을 요청하는 데 사용됩니다.',
   'settings.igdb.clientSecret.name': 'Twitch Client Secret',
   'settings.igdb.clientSecret.desc': '플러그인 데이터로 로컬에 저장되며 액세스 토큰 갱신에 사용됩니다.',
+  'settings.timeToBeat.name': '클리어 시간 가져오기',
+  'settings.timeToBeat.desc': '선택한 게임의 예상 클리어 시간을 IGDB에서 가져옵니다.',
+  'settings.steam.header': 'Steam',
+  'settings.steam.enable.name': 'Steam 연동 사용',
+  'settings.steam.enable.desc': '선택한 게임의 플레이 시간과 도전 과제를 가져옵니다.',
+  'settings.steam.key.name': 'Steam API 키',
+  'settings.steam.key.desc':
+    'Obsidian Secret Storage에 저장된 키를 선택합니다. 키 값은 플러그인 설정에 저장되지 않습니다.',
+  'settings.steam.key.unavailable': '이 Obsidian 버전에서는 Secret Storage를 사용할 수 없습니다.',
+  'settings.steam.profile.name': 'Steam 프로필',
+  'settings.steam.profile.desc':
+    'SteamID64 또는 steamcommunity.com의 /profiles/SteamID64, /id/vanity URL을 입력합니다.',
   'settings.translation.header': '번역',
   'settings.translation.enable.name': '번역 사용',
   'settings.translation.enable.desc': '노트 내용을 만들기 전에 요약과 스토리라인을 번역합니다.',

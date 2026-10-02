@@ -69,6 +69,12 @@ describe('applyTemplateTransformations', () => {
     expect(applyTemplateTransformations('plain note text')).toBe('plain note text');
   });
 
+  it('serializes array filters safely without expanding template-like values', () => {
+    expect(applyTemplateTransformations('{{platforms|json}}', { title: 'x', platforms: ['A, B', "It's <%x%>"] })).toBe(
+      '["A, B","It\'s \\u003c%x%\\u003e"]',
+    );
+  });
+
   it('replaces multiple tokens in one string', () => {
     expect(applyTemplateTransformations('on {{date}} at {{time}}')).toBe('on 2026-01-15 at 12:00:00');
   });

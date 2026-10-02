@@ -4,6 +4,7 @@ export interface FrontMatter {
 
 export interface GameEntry {
   title: string;
+  igdbId?: number;
   alternativeTitle?: string;
   alternativeTitles?: string[];
   slug?: string;
@@ -46,4 +47,15 @@ export interface GameEntry {
   localScreenshot?: string;
   localScreenshots?: string[];
   localCoverImage?: string;
+  timeToBeatMain?: number | '';
+  timeToBeatAverage?: number | '';
+  timeToBeatCompletionist?: number | '';
+  steamAppId?: number;
+  steamStoreUrl?: string;
+  steamPlaytimeHours?: number | '';
+  steamAchievements?: Array<{ apiname: string; achieved: boolean; unlocktime: number }>;
+  steamAchievementsUnlocked?: number | '';
+  steamAchievementsTotal?: number | '';
+  localCoverWikilink?: string;
+  firstScreenshotWikilink?: string;
 }
