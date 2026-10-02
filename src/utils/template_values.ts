@@ -72,12 +72,11 @@ export function renderGameVariables(game: GameEntry, text: string): string {
       if (name === 'first') value = Array.isArray(value) ? value[0] ?? '' : value;
       else if (name === 'join')
         value = Array.isArray(value) ? value.map(templateString).join(arg ?? ', ') : templateString(value);
-      else if (name === 'json' || name === 'yaml') {
-        value = templateJson(value ?? '');
-        serialized = true;
-      } else return token; // Never execute arbitrary expressions.
+      else if (name === 'json' || name === 'yaml') serialized = true;
+      else return token; // Never execute arbitrary expressions.
     }
-    if (!serialized && (key.toLowerCase() === 'steamachievements' || key.toLowerCase() === 'timetobeat')) {
+    if (serialized) return templateJson(value ?? '');
+    if (key.toLowerCase() === 'steamachievements' || key.toLowerCase() === 'timetobeat') {
       return templateJson(value);
     }
     return templateString(value);

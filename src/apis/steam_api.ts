@@ -172,6 +172,8 @@ export function resolveSteamAppId(
     }
   }
   for (const game of externalGames ?? []) {
+    const urlId = game.url ? resolveSteamAppId([game.url]) : undefined;
+    if (urlId !== undefined) return urlId;
     if (game.external_game_source?.name?.toLowerCase() !== 'steam' || !/^[1-9]\d*$/.test(game.uid ?? '')) continue;
     const id = Number(game.uid);
     if (Number.isSafeInteger(id)) return id;

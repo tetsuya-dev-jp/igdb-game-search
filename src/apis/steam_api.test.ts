@@ -54,7 +54,7 @@ describe('Steam integration', () => {
     });
     expect(request).not.toHaveBeenCalled();
     request.mockRejectedValueOnce(new Error('private')).mockResolvedValueOnce({ playerstats: { success: false } });
-    const result = await new SteamApi('player', 'key').getGameData(1);
+    const result = await new SteamApi('76561198000000000', 'key').getGameData(1);
     expect(result.playtimeHours).toBe('');
     expect(result.achieved).toBe('');
     expect(result.total).toBe('');

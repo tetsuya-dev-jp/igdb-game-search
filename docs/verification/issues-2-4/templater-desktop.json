@@ -1,10 +1,10 @@
 [
   {
-    "text": "---\nTitle: Resident Evil Requiem\nCover: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual-2.jpg]]\"\nBackdrop: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual/screenshot-01-2.jpg]]\"\nPlatform:\n  - \"Xbox Series X|S\"\n  - \"Nintendo Switch 2\"\n  - \"PC (Microsoft Windows)\"\n  - \"PlayStation 5\"\nDeveloper: Capcom Development Division 1\nPublisher: Capcom\nGenre:\n  - \"Shooter\"\n  - \"Puzzle\"\n  - \"Adventure\"\nReleaseDate: 2026-02-27\nMetacritic: 333\nStoreUrl: https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/\n---\n\n# Resident Evil Requiem\n",
+    "text": "---\nTitle: Resident Evil Requiem\nCover: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual-4.jpg]]\"\nBackdrop: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual/screenshot-01-4.jpg]]\"\nPlatform:\n  - \"Xbox Series X|S\"\n  - \"Nintendo Switch 2\"\n  - \"PC (Microsoft Windows)\"\n  - \"PlayStation 5\"\nDeveloper: Capcom Development Division 1\nPublisher: Capcom\nGenre:\n  - \"Shooter\"\n  - \"Puzzle\"\n  - \"Adventure\"\nReleaseDate: 2026-02-27\nMetacritic: 333\nStoreUrl: https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/\n---\n\n# Resident Evil Requiem\n",
     "frontmatter": {
       "Title": "Resident Evil Requiem",
-      "Cover": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual-2.jpg]]",
-      "Backdrop": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual/screenshot-01-2.jpg]]",
+      "Cover": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual-4.jpg]]",
+      "Backdrop": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual/screenshot-01-4.jpg]]",
       "Platform": [
         "Xbox Series X|S",
         "Nintendo Switch 2",
@@ -30,11 +30,11 @@
     "windowTitle": "Resident Evil Requiem - templater-manual - .vault - Obsidian 1.13.7"
   },
   {
-    "text": "---\nTitle: Resident Evil Requiem\nCover: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-2.jpg]]\"\nBackdrop: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-2.jpg]]\"\nPlatform:\n  - \"Xbox Series X|S\"\n  - \"Nintendo Switch 2\"\n  - \"PC (Microsoft Windows)\"\n  - \"PlayStation 5\"\nDeveloper: Capcom Development Division 1\nPublisher: Capcom\nGenre:\n  - \"Shooter\"\n  - \"Puzzle\"\n  - \"Adventure\"\nReleaseDate: 2026-02-27\nMetacritic: 333\nStoreUrl: https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/\n---\n\n# Resident Evil Requiem\n",
+    "text": "---\nTitle: Resident Evil Requiem\nCover: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-4.jpg]]\"\nBackdrop: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-4.jpg]]\"\nPlatform:\n  - \"Xbox Series X|S\"\n  - \"Nintendo Switch 2\"\n  - \"PC (Microsoft Windows)\"\n  - \"PlayStation 5\"\nDeveloper: Capcom Development Division 1\nPublisher: Capcom\nGenre:\n  - \"Shooter\"\n  - \"Puzzle\"\n  - \"Adventure\"\nReleaseDate: 2026-02-27\nMetacritic: 333\nStoreUrl: https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/\n---\n\n# Resident Evil Requiem\n",
     "frontmatter": {
       "Title": "Resident Evil Requiem",
-      "Cover": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-2.jpg]]",
-      "Backdrop": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-2.jpg]]",
+      "Cover": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-4.jpg]]",
+      "Backdrop": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-4.jpg]]",
       "Platform": [
         "Xbox Series X|S",
         "Nintendo Switch 2",

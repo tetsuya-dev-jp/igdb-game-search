@@ -9,8 +9,8 @@ Title: {{title}}
 Cover: {{localCoverWikilink|yaml}}
 Backdrop: {{firstScreenshotWikilink|yaml}}
 Platform: {{platforms|yaml}}
-Developer: {{developers|first}}
-Publisher: {{publishers|first}}
+Developer: {{developers|first|yaml}}
+Publisher: {{publishers|first|yaml}}
 Genre: {{genres|yaml}}
 ReleaseDate: {{firstReleaseDate}}
 Metacritic: {{totalRatingCount}}
@@ -103,5 +103,22 @@ try {
   await fs.writeFile(path.join(reportDir,'after.md'),result.text);
   await fs.writeFile(path.join(reportDir,process.env.E2E_DESKTOP==='1'?'desktop.json':'headless.json'),JSON.stringify({...result, frontmatter:fm},null,2)+'\n');
   await page.screenshot(path.join(reportDir,process.env.E2E_DESKTOP==='1'?'desktop-after.png':'headless-after.png'));
+  const displayed = await page.evaluate(`(async () => {
+    const leaf=app.workspace.getMostRecentLeaf();
+    await leaf.setViewState({type:'markdown',state:{file:${JSON.stringify('Resident Evil Requiem - after.md')},mode:'preview'}});
+    const deadline=Date.now()+5000;
+    while(true){
+      const images=[...document.querySelectorAll('.image-embed img')].filter(i=>i.complete && i.naturalWidth>0);
+      if(images.length>=2){
+        const pane=document.querySelector('.markdown-preview-view');
+        if(pane)pane.scrollTop=pane.scrollHeight;
+        return images.length;
+      }
+      if(Date.now()>deadline)throw new Error('Downloaded cover/backdrop did not render in Obsidian');
+      await new Promise(r=>setTimeout(r,100));
+    }
+  })()`);
+  assert.ok(displayed>=2,'Downloaded cover and backdrop render as actual Obsidian images');
+  await page.screenshot(path.join(reportDir,process.env.E2E_DESKTOP==='1'?'desktop-images.png':'headless-images.png'));
   console.log(`PASS enrichment: YAML lists, first companies, local image wikilinks, real image downloads, Steam-only URL, no-key empty optional data (${result.vault})`);
 } finally {page.close();}

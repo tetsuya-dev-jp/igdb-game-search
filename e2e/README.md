@@ -1,4 +1,4 @@
-# E2E harness — headless Obsidian smoke tests
+# E2E harness — isolated headless and native Obsidian verification
 
 End-to-end smoke test that runs the real plugin inside a real (headless)
 Obsidian instance: build → deploy into a throwaway vault → launch under xvfb →
@@ -8,7 +8,7 @@ contract, and the no-credentials modal path fails with the expected error.
 
 ## Prerequisites (Linux)
 
-- `xvfb-run` (X virtual framebuffer), `curl`, `git`
+- `xvfb-run` (X virtual framebuffer), `curl`, `git`, `gh`, `unzip`
 - Node.js ≥ 20 with a global `WebSocket` (Node ≥ 22, or 20/21 with
   `--experimental-websocket`)
 - pnpm (repo standard)
@@ -33,7 +33,7 @@ bash e2e/run-windows.sh                 # requires Obsidian closed; Windows user
 
 ```bash
 bash e2e/run.sh            # full suite; exit 0 = all checks passed
-E2E_SHOTS=1 bash e2e/run.sh    # also write a screenshot to e2e/.cache/shots/
+E2E_SHOTS=1 bash e2e/run.sh    # smoke screenshot in $TMPDIR/igdb-e2e-shots/
 E2E_CDP_PORT=9333 bash e2e/run.sh  # override the CDP port (default 9222)
 ```
 
@@ -57,8 +57,9 @@ reproduced standalone with a trivial fake game — Obsidian bug, not plugin
 logic): the first real search result is fed straight into the plugin's render
 + creation pipeline instead.
 
-First run downloads the latest Obsidian AppImage (~140 MB) into
-`e2e/.cache/`; later runs reuse the cache. A second consecutive run must also
+First run downloads the newest published desktop x86_64 Obsidian AppImage (~140 MB) into
+`$TMPDIR/igdb-e2e-obsidian/` (override `E2E_OBSIDIAN_CACHE`); later runs reuse the cache.
+Mobile-only releases are skipped instead of guessing a desktop version. A second consecutive run must also
 pass (idempotent: cache hit, no duplicate vault registrations, no stale-lock
 failures).
 
@@ -66,14 +67,46 @@ Run the driver standalone against an already-running instance:
 
 ```bash
 node e2e/driver.mjs        # expects CDP on 127.0.0.1:9222 (E2E_CDP_PORT)
-node e2e/settings-probe.mjs  # settings-tab probe: declarative rows, disabled
-                           # states, trimming, UI-language re-render
+node e2e/settings-probe.mjs  # 23 real settings checks, including secret picker
+node e2e/enrichment-probe.mjs # actual YAML/links/no-key note + real image downloads
+node e2e/templater-probe.mjs  # exact README recipe, manual and auto execution
 ```
 
-## What it verifies
+## New enrichment and Templater suites
 
-1. The app opens the test vault (`e2e/.vault`, registered in
-   `~/.config/obsidian/obsidian.json`).
+`run.sh` now runs all four drivers in sequence. It installs official Templater
+release assets in the **test vault only**, then checks both manual and automatic
+Templater execution modes (including modern per-vault security flags). The
+recipe is read directly from README, not copied into a separate test fixture.
+
+The Resident Evil Requiem selection is supplied by the public-source fixture
+in `e2e/fixtures/`; this is not a live authenticated IGDB search. Images really
+download over the network. Positive personal Steam/time estimates remain unit
+tests with mocked HTTP; the real Obsidian client verifies clean no-key behavior.
+The authenticated smoke test remains explicitly skipped without Twitch credentials.
+
+Native GNOME/Xwayland validation uses the current session's `DISPLAY` and
+`XAUTHORITY` (do not guess a stale auth path):
+
+```bash
+E2E_DESKTOP=1 E2E_CDP_PORT=9334 bash e2e/run.sh
+```
+
+The Linux runner uses a private `--user-data-dir` and process group; it never
+uses global `pkill` or modifies the personal Obsidian configuration. Temporary
+profiles/logs are deleted on exit. The test vault and evidence remain available.
+
+Overrides: `E2E_VAULT_DIR` (absolute or relative vault path), `E2E_VAULT_NAME`,
+`E2E_CDP_PORT`, `E2E_REPORT_DIR` (default `docs/verification/issues-2-4`),
+`E2E_SHOT_DIR`, `E2E_OBSIDIAN_CACHE`. `setup-vault.sh` also accepts
+`E2E_CONFIG_DIR` and `E2E_SKIP_BUILD=1` for an already-verified production build.
+Use these drivers only against the disposable test vault.
+
+Full recorded evidence: [issues #2–#4 report](../docs/verification/issues-2-4/README.md).
+
+## What the original smoke driver verifies
+
+1. The app opens the test vault (`e2e/.vault`, registered only in the run's isolated temporary Obsidian profile).
 2. The plugin instance loads (clicking the first-run vault-trust dialog
    when present — handled in the Obsidian UI's own language, en/ja/ko).
 3. Both commands are registered (`open-game-search-modal`,

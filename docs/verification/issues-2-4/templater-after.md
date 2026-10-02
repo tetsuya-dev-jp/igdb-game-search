@@ -1,7 +1,7 @@
 ---
 Title: Resident Evil Requiem
-Cover: "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-3.jpg]]"
-Backdrop: "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-3.jpg]]"
+Cover: "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-5.jpg]]"
+Backdrop: "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-5.jpg]]"
 Platform:
   - "Xbox Series X|S"
   - "Nintendo Switch 2"

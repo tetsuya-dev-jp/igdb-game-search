@@ -85,6 +85,14 @@ describe('structured game template variables', () => {
     expect(rendered).toContain('{{genres}}');
     expect(JSON.parse(replaceVariableSyntax({ ...game, title }, '{{title|json}}'))).toBe(title);
   });
+  it('keeps typed values until final JSON/YAML serialization in either filter order', () => {
+    const context = { ...game, developers: ['ACME: "One"', 'Second'] };
+    expect(JSON.parse(replaceVariableSyntax(context, '{{developers|first|yaml}}'))).toBe('ACME: "One"');
+    expect(JSON.parse(replaceVariableSyntax(context, '{{developers|yaml|first}}'))).toBe('ACME: "One"');
+    expect(JSON.parse(replaceVariableSyntax(game, '{{genres|json|join: / }}'))).toBe('Shooter / Puzzle / Adventure');
+    expect(replaceVariableSyntax(game, '{{genres|first|join: / }}')).toBe('Shooter');
+  });
+
   it('keeps unsupported filters intact without evaluating code', () => {
     expect(replaceVariableSyntax(game, '{{genres|eval}} <%= globalThis.hacked = true %>')).toBe(
       '{{genres|eval}} <%= globalThis.hacked = true %>',
