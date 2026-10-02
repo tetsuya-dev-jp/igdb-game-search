@@ -2,7 +2,7 @@
 
 ## Environment and scope
 
-- Base: `master` / `6af1ba9`, plugin version **0.5.0**. Changes are unreleased; no version/tag migration is required.
+- Base: `master` / `6af1ba9`, plugin version **0.5.0**. These records capture pre-release validation; the features are included in release 0.6.0. Existing template behavior requires no migration.
 - Obsidian **1.13.7**, official Linux x86_64 AppImage; Templater **2.25.1**, official release assets.
 - Node **26.7.0**, pnpm **12.8.1**.
 - Test vault: `/home/tetsuya/dev/igdb-game-search/e2e/.vault`.

@@ -375,7 +375,7 @@ Use JSON-encoded aliases for scalar values (`{{title|json}}`) and the actual JSO
 - **Verify**: `pnpm lint` (prettier + eslint + typecheck) and `pnpm test` (jest)
 - **Translations**: every new UI string must add a key to `src/locales/en.ts` and every locale file, and get a README row.
 - **Build**: `pnpm build`
-- **Release**: `pnpm release` (standard-version) — pushes a versioned tag; the GitHub Actions workflow builds and attaches the release assets.
+- **Release**: `pnpm release` (standard-version) prepares the local version commit and tag; it does not push them. Keep `versions.json` synchronized using `version-bump.mjs`, then push the release commit and exact version tag. The tag-push GitHub Actions workflow runs lint/tests/build and publishes `main.js`, `manifest.json`, and `styles.css`. Merging into `master` alone does not publish a release.
 
 ## Acknowledgements
 

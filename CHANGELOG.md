@@ -2,15 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## Unreleased
+## [0.6.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.5.0...0.6.0) (2026-10-03)
 
 ### Features
 
-- Add optional IGDB time-to-beat and Steam profile enrichment settings (#2, #3).
-- Add structured array aliases, safe first/join/JSON/YAML filters, local image wikilinks, and the Resident Evil Requiem Templater recipe (#4).
+- Add optional IGDB time-to-beat estimates in hours, with main/average/completionist variables and JSON array/object forms (#2).
+- Add optional Steam Secret Storage integration, SteamID64/vanity resolution, owned-game playtime, achievements, and matched Steam store URLs (#3).
+- Add structured array aliases, first/join/JSON/YAML filters, local cover and first-screenshot wikilinks, and a copy-paste Resident Evil Requiem Templater recipe (#4).
+- Preserve existing CSV variables and default frontmatter behavior; no migration required.
+
+### Bug Fixes
+
 - Support Templater 2.25 per-vault auto-trigger settings without executing scripts twice.
-- Add isolated headless/native Obsidian E2E coverage for settings, note creation, image downloads, and both Templater trigger modes.
-- Preserve existing CSV interpolation and default frontmatter behavior; no migration required.
+- Handle missing/private Steam data and transient API failures without blocking note creation or poisoning caches.
+
+### Verification
+
+- 132 tests across 14 suites; formatting, ESLint, type checking, and production build pass.
+- Real Obsidian 1.13.7 headless/native desktop verification: 23 settings checks, note/YAML/image workflows, and both Templater trigger modes.
+- Positive enrichment responses are unit-tested with mocks; live no-key degradation is verified. IGDB-only time estimates: no unsupported HowLongToBeat scraping.
+
+Implementation: [PR #5](https://github.com/tetsuya-dev-jp/igdb-game-search/pull/5). [Before/after notes and screenshots](docs/verification/issues-2-4/README.md).
 
 ## [0.5.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.4.0...0.5.0) (2026-08-11)
 
