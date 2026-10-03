@@ -33,7 +33,7 @@ try {
       while(!app.metadataCache.getFirstLinkpathDest(template,'')){
         if(Date.now()>deadline)throw new Error('Template not indexed');await new Promise(r=>setTimeout(r,100));
       }
-      Object.assign(p.settings,{templateFile:template,enableTranslation:false,enableSteam:false,enableTimeToBeat:false,
+      Object.assign(p.settings,{templateFile:template,enableTranslation:false,enableSteam:false,
         folder:'',fileNameFormat:name,enableCoverImageSave:true,enableScreenshotSave:true,
         coverImagePath:'00 - Atlas/Archive/Attachments/09 - The Arcade',screenshotImagePath:'00 - Atlas/Archive/Attachments/09 - The Arcade',openPageOnCompletion:true});
       p.searchGameMetadata=async()=>structuredClone(${JSON.stringify(fixture.game)});
@@ -73,7 +73,7 @@ try {
     reports.push(result);
     console.log(`PASS README Templater recipe: real block lists, first names, wikilinks, Steam URL, quote control, exactly one execution (auto=${auto}, Templater ${result.templater})`);
   }
-  const dir=process.env.E2E_REPORT_DIR||'docs/verification/issues-2-4';await fs.mkdir(dir,{recursive:true});
+  const dir=process.env.E2E_REPORT_DIR||'docs/verification/automatic-time-to-beat';await fs.mkdir(dir,{recursive:true});
   const suffix=process.env.E2E_DESKTOP==='1'?'desktop':'headless';
   await fs.writeFile(path.join(dir,`templater-${suffix}.json`),JSON.stringify(reports,null,2)+'\n');
   await fs.writeFile(path.join(dir,'templater-after.md'),reports[1].text);

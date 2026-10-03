@@ -38,3 +38,4 @@ node e2e/driver.mjs
 node e2e/settings-probe.mjs
 node e2e/enrichment-probe.mjs
 node e2e/templater-probe.mjs
+node e2e/automatic-time-probe.mjs

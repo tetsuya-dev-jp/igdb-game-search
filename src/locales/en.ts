@@ -27,8 +27,6 @@ export const en = {
   'settings.igdb.clientId.desc': 'Used to request an access token for game metadata.',
   'settings.igdb.clientSecret.name': 'Twitch client secret',
   'settings.igdb.clientSecret.desc': 'Stored locally in plugin data and used to refresh the access token.',
-  'settings.timeToBeat.name': 'Fetch time to beat',
-  'settings.timeToBeat.desc': 'Fetch IGDB time-to-beat estimates for the selected game.',
   'settings.steam.header': 'Steam',
   'settings.steam.enable.name': 'Enable Steam integration',
   'settings.steam.enable.desc': 'Fetch playtime and achievements for the selected game.',

@@ -29,8 +29,6 @@ export const ko: Partial<Record<I18nKey, string>> = {
   'settings.igdb.clientId.desc': '게임 메타데이터용 액세스 토큰을 요청하는 데 사용됩니다.',
   'settings.igdb.clientSecret.name': 'Twitch Client Secret',
   'settings.igdb.clientSecret.desc': '플러그인 데이터로 로컬에 저장되며 액세스 토큰 갱신에 사용됩니다.',
-  'settings.timeToBeat.name': '클리어 시간 가져오기',
-  'settings.timeToBeat.desc': '선택한 게임의 예상 클리어 시간을 IGDB에서 가져옵니다.',
   'settings.steam.header': 'Steam',
   'settings.steam.enable.name': 'Steam 연동 사용',
   'settings.steam.enable.desc': '선택한 게임의 플레이 시간과 도전 과제를 가져옵니다.',

@@ -1,0 +1,83 @@
+[
+  {
+    "kind": "populated",
+    "note": "Automatic time - populated.md",
+    "text": "---\nTitle: \"Automatic time - populated\"\nTimeToBeatMain: 10\nTimeToBeatAverage: 12\nTimeToBeatCompletionist: 20\nTimeToBeatList: [10,12,20]\nTimeToBeat: {\"main\":10,\"average\":12,\"completionist\":20}\nVerification: Mocked HTTP transport in real Obsidian; not live game estimates\n---",
+    "frontmatter": {
+      "Title": "Automatic time - populated",
+      "TimeToBeatMain": 10,
+      "TimeToBeatAverage": 12,
+      "TimeToBeatCompletionist": 20,
+      "TimeToBeatList": [
+        10,
+        12,
+        20
+      ],
+      "TimeToBeat": {
+        "main": 10,
+        "average": 12,
+        "completionist": 20
+      },
+      "Verification": "Mocked HTTP transport in real Obsidian; not live game estimates"
+    },
+    "requestCount": 1,
+    "legacyFlagPresent": false,
+    "plugin": "0.6.1",
+    "windowTitle": "Automatic time - populated - .vault - Obsidian 1.13.7",
+    "vault": "/home/tetsuya/dev/igdb-game-search/e2e/.vault"
+  },
+  {
+    "kind": "missing",
+    "note": "Automatic time - missing.md",
+    "text": "---\nTitle: \"Automatic time - missing\"\nTimeToBeatMain: \"\"\nTimeToBeatAverage: \"\"\nTimeToBeatCompletionist: \"\"\nTimeToBeatList: [\"\",\"\",\"\"]\nTimeToBeat: {\"main\":\"\",\"average\":\"\",\"completionist\":\"\"}\nVerification: Mocked HTTP transport in real Obsidian; not live game estimates\n---",
+    "frontmatter": {
+      "Title": "Automatic time - missing",
+      "TimeToBeatMain": "",
+      "TimeToBeatAverage": "",
+      "TimeToBeatCompletionist": "",
+      "TimeToBeatList": [
+        "",
+        "",
+        ""
+      ],
+      "TimeToBeat": {
+        "main": "",
+        "average": "",
+        "completionist": ""
+      },
+      "Verification": "Mocked HTTP transport in real Obsidian; not live game estimates"
+    },
+    "requestCount": 1,
+    "legacyFlagPresent": false,
+    "plugin": "0.6.1",
+    "windowTitle": "Automatic time - missing - .vault - Obsidian 1.13.7",
+    "vault": "/home/tetsuya/dev/igdb-game-search/e2e/.vault"
+  },
+  {
+    "kind": "failure",
+    "note": "Automatic time - failure.md",
+    "text": "---\nTitle: \"Automatic time - failure\"\nTimeToBeatMain: \"\"\nTimeToBeatAverage: \"\"\nTimeToBeatCompletionist: \"\"\nTimeToBeatList: [\"\",\"\",\"\"]\nTimeToBeat: {\"main\":\"\",\"average\":\"\",\"completionist\":\"\"}\nVerification: Mocked HTTP transport in real Obsidian; not live game estimates\n---",
+    "frontmatter": {
+      "Title": "Automatic time - failure",
+      "TimeToBeatMain": "",
+      "TimeToBeatAverage": "",
+      "TimeToBeatCompletionist": "",
+      "TimeToBeatList": [
+        "",
+        "",
+        ""
+      ],
+      "TimeToBeat": {
+        "main": "",
+        "average": "",
+        "completionist": ""
+      },
+      "Verification": "Mocked HTTP transport in real Obsidian; not live game estimates"
+    },
+    "requestCount": 2,
+    "legacyFlagPresent": false,
+    "plugin": "0.6.1",
+    "windowTitle": "Automatic time - failure - .vault - Obsidian 1.13.7",
+    "vault": "/home/tetsuya/dev/igdb-game-search/e2e/.vault"
+  }
+]
