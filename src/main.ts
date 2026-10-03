@@ -148,7 +148,7 @@ export default class GameSearchPlugin extends Plugin {
   async getRenderedContents(game: GameEntry) {
     const localizedGame = { ...(await this.translateGameEntry(game)) };
     await this.enrichSteam(localizedGame);
-    if (this.settings.enableTimeToBeat && localizedGame.igdbId) {
+    if (localizedGame.igdbId) {
       const time = await new IgdbApi(this.settings, () => this.saveSettings()).getTimeToBeat(localizedGame.igdbId);
       localizedGame.timeToBeatMain = time.main;
       localizedGame.timeToBeatAverage = time.average;
@@ -398,6 +398,8 @@ export default class GameSearchPlugin extends Plugin {
   async loadSettings() {
     const data = (await this.loadData()) as Partial<GameSearchPluginSettings>;
     this.settings = { ...DEFAULT_SETTINGS, ...data };
+    // The old opt-in flag no longer controls ordinary IGDB metadata.
+    delete (this.settings as GameSearchPluginSettings & { enableTimeToBeat?: unknown }).enableTimeToBeat;
   }
 
   async saveSettings() {

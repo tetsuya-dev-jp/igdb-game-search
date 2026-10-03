@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.6.1](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.6.0...0.6.1) (2026-10-03)
+
+### Bug Fixes
+
+- Fetch IGDB time-to-beat metadata automatically when creating a game note or inserting metadata. Remove the opt-in setting, default flag, and its EN/JA/KO UI strings.
+- Ignore legacy `enableTimeToBeat` values, including `false`, and remove the obsolete field from settings on load; subsequent settings saves no longer include it.
+- Keep the existing three duration variables, array/object forms, one-hour cache, authentication retry and empty fallback behavior. Steam integration remains independently opt-in.
+
+### Verification
+
+- Add regression tests for automatic lookup, legacy settings migration and missing-id/no-estimate behavior.
+- Extend real Obsidian desktop/headless tests to verify the toggle is absent and time values populate automatically through the production client/render/cache pipeline with explicitly mocked HTTP transport. Verify empty responses, transient errors and cache behavior without claiming live IGDB estimates.
+
 ## [0.6.0](https://github.com/tetsuya-dev-jp/igdb-game-search/compare/0.5.0...0.6.0) (2026-10-03)
 
 ### Features

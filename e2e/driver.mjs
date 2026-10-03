@@ -182,6 +182,12 @@ async function main() {
     const pluginLoaded = () =>
       app.evaluate(`!!(app.plugins && app.plugins.plugins && app.plugins.plugins['igdb-game-search'])`);
     if (await pluginLoaded()) return;
+    // Vault availability precedes asynchronous plugin loading/trust UI. Wait
+    // before treating a fresh isolated profile as a stale restricted decision.
+    try {
+      await poll(app, `!!app.plugins?.plugins?.['igdb-game-search'] || [...document.querySelectorAll('.modal')].some(m => /trust|\\u4fe1\\u983c|\\uc2e0\\ub8b0/i.test(m.textContent || ''))`, 10000, 'plugin or trust dialog');
+    } catch { /* The restricted-mode recovery below handles a saved refusal. */ }
+    if (await pluginLoaded()) return;
 
     // First-open flow: the vault-trust dialog blocks plugin load until the
     // affirmative button is clicked. The dialog text follows Obsidian's UI
@@ -209,9 +215,10 @@ async function main() {
       // obsidian.json) and reload so the first-open flow runs.
       const { readFileSync } = await import('node:fs');
       const cfg = JSON.parse(
-        readFileSync(`${process.env.HOME}/.config/obsidian/obsidian.json`, 'utf8'),
+        readFileSync(`${process.env.E2E_CONFIG_DIR || `${process.env.HOME}/.config/obsidian`}/obsidian.json`, 'utf8'),
       );
-      const uuid = Object.entries(cfg.vaults || {}).find(([, v]) => v.path.includes('e2e/.vault') || v.path.includes('igdb-e2e-vault'))?.[0];
+      const vaultPath = await app.evaluate('app.vault.adapter.getBasePath()');
+      const uuid = Object.entries(cfg.vaults || {}).find(([, v]) => v.path === vaultPath)?.[0];
       const decision = uuid && (await app.evaluate(`localStorage.getItem('enable-plugin-${uuid}')`));
       if (decision === 'false') {
         await app.evaluate(`localStorage.removeItem('enable-plugin-${uuid}')`);

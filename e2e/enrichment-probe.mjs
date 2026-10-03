@@ -31,7 +31,7 @@ No personal Steam playtime or authenticated IGDB times are asserted.
 !{{firstScreenshotWikilink}}
 `;
 const page = await connectVault();
-const reportDir = process.env.E2E_REPORT_DIR || 'docs/verification/issues-2-4';
+const reportDir = process.env.E2E_REPORT_DIR || 'docs/verification/automatic-time-to-beat';
 try {
   const result = await page.evaluate(`(async () => {
     const p = app.plugins.plugins['igdb-game-search'];
@@ -52,7 +52,7 @@ try {
       if (Date.now()>deadline) throw new Error('Template not indexed');
       await new Promise(r=>setTimeout(r,100));
     }
-    Object.assign(p.settings,{enableTranslation:false,enableTimeToBeat:true,enableSteam:true,
+    Object.assign(p.settings,{enableTranslation:false,enableSteam:true,
       steamApiKeySecretName:'', steamProfile:'',
       templateFile:temp, folder:'', fileNameFormat:'{{title}} - after',
       enableCoverImageSave:true,coverImagePath:'00 - Atlas/Archive/Attachments/09 - The Arcade',

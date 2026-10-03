@@ -20,7 +20,6 @@ export function createSettings(overrides: Partial<GameSearchPluginSettings> = {}
     enableScreenshotSave: false,
     screenshotImagePath: '',
     enableTranslation: false,
-    enableTimeToBeat: false,
     enableSteam: false,
     steamApiKeySecretName: '',
     steamProfile: '',

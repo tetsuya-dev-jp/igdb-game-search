@@ -69,12 +69,13 @@ Run the driver standalone against an already-running instance:
 node e2e/driver.mjs        # expects CDP on 127.0.0.1:9222 (E2E_CDP_PORT)
 node e2e/settings-probe.mjs  # 23 real settings checks, including secret picker
 node e2e/enrichment-probe.mjs # actual YAML/links/no-key note + real image downloads
+node e2e/automatic-time-probe.mjs # real client/render/cache with explicitly mocked time HTTP
 node e2e/templater-probe.mjs  # exact README recipe, manual and auto execution
 ```
 
 ## New enrichment and Templater suites
 
-`run.sh` now runs all four drivers in sequence. It installs official Templater
+`run.sh` runs smoke, settings, enrichment, Templater, and automatic-time drivers in sequence. It installs official Templater
 release assets in the **test vault only**, then checks both manual and automatic
 Templater execution modes (including modern per-vault security flags). The
 recipe is read directly from README, not copied into a separate test fixture.
@@ -97,12 +98,12 @@ uses global `pkill` or modifies the personal Obsidian configuration. Temporary
 profiles/logs are deleted on exit. The test vault and evidence remain available.
 
 Overrides: `E2E_VAULT_DIR` (absolute or relative vault path), `E2E_VAULT_NAME`,
-`E2E_CDP_PORT`, `E2E_REPORT_DIR` (default `docs/verification/issues-2-4`),
+`E2E_CDP_PORT`, `E2E_REPORT_DIR` (default `docs/verification/automatic-time-to-beat`),
 `E2E_SHOT_DIR`, `E2E_OBSIDIAN_CACHE`. `setup-vault.sh` also accepts
 `E2E_CONFIG_DIR` and `E2E_SKIP_BUILD=1` for an already-verified production build.
 Use these drivers only against the disposable test vault.
 
-Full recorded evidence: [issues #2–#4 report](../docs/verification/issues-2-4/README.md).
+Current automatic-time evidence: [0.6.1 report](../docs/verification/automatic-time-to-beat/README.md). Earlier feature verification: [issues #2–#4 report](../docs/verification/issues-2-4/README.md).
 
 ## What the original smoke driver verifies
 

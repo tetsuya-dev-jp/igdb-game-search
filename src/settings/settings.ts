@@ -31,7 +31,6 @@ export interface GameSearchPluginSettings {
   enableScreenshotSave: boolean;
   screenshotImagePath: string;
   enableTranslation: boolean;
-  enableTimeToBeat: boolean;
   enableSteam: boolean;
   steamApiKeySecretName: string;
   steamProfile: string;
@@ -59,7 +58,6 @@ export const DEFAULT_SETTINGS: GameSearchPluginSettings = {
   enableScreenshotSave: false,
   screenshotImagePath: '',
   enableTranslation: false,
-  enableTimeToBeat: false,
   enableSteam: false,
   steamApiKeySecretName: '',
   steamProfile: '',
@@ -166,11 +164,6 @@ export class GameSearchSettingTab extends PluginSettingTab {
             name: t('settings.igdb.clientSecret.name', lang),
             desc: t('settings.igdb.clientSecret.desc', lang),
             render: setting => this.renderSecret(setting, 'twitchClientSecret', '', false),
-          },
-          {
-            name: t('settings.timeToBeat.name', lang),
-            desc: t('settings.timeToBeat.desc', lang),
-            control: { type: 'toggle', key: 'enableTimeToBeat' },
           },
         ],
       },

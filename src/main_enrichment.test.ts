@@ -32,7 +32,6 @@ beforeEach(() => {
     content:
       '{{steamPlaytimeHours}} {{steamAchievements}} {{timeToBeatMain}} {{timeToBeatAverage}} {{timeToBeatCompletionist}}',
     enableSteam: false,
-    enableTimeToBeat: false,
     steamProfile: '76561198000000000',
     steamApiKeySecretName: 'steam-test',
   });
@@ -47,15 +46,14 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe('optional note enrichment', () => {
-  it('makes no external enrichment or secret access when disabled', async () => {
-    expect(await plugin.getRenderedContents(game)).toBe('[]');
+  it('fetches ordinary time metadata while disabled Steam makes no requests or secret access', async () => {
+    expect(await plugin.getRenderedContents(game)).toBe('[] 8 10 16');
     expect(getData).not.toHaveBeenCalled();
-    expect(getTime).not.toHaveBeenCalled();
+    expect(getTime).toHaveBeenCalledWith(123);
     expect(getSecret).not.toHaveBeenCalled();
   });
   it('uses the secret identifier, enriches the selected game, and keeps the input immutable', async () => {
     plugin.settings.enableSteam = true;
-    plugin.settings.enableTimeToBeat = true;
     expect(await plugin.getRenderedContents(game)).toBe(
       '12.5 [{"apiname":"ACH_1","achieved":true,"unlocktime":100}] 8 10 16',
     );
@@ -68,14 +66,14 @@ describe('optional note enrichment', () => {
   it('degrades missing/locked secret storage without blocking notes', async () => {
     plugin.settings.enableSteam = true;
     getSecret.mockReturnValue(null);
-    expect(await plugin.getRenderedContents(game)).toBe('[]');
+    expect(await plugin.getRenderedContents(game)).toBe('[] 8 10 16');
     expect(getData).not.toHaveBeenCalled();
     getSecret.mockImplementation(() => {
       throw new Error('locked');
     });
-    expect(await plugin.getRenderedContents(game)).toBe('[]');
+    expect(await plugin.getRenderedContents(game)).toBe('[] 8 10 16');
     plugin.app = {} as App;
-    expect(await plugin.getRenderedContents(game)).toBe('[]');
+    expect(await plugin.getRenderedContents(game)).toBe('[] 8 10 16');
   });
   it('keeps a cached client only while profile and secret values remain unchanged', async () => {
     plugin.settings.enableSteam = true;

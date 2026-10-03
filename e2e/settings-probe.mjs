@@ -176,7 +176,6 @@ async function main() {
     const p = app.plugins.plugins['igdb-game-search'];
     p.settings.uiLanguage = 'en';
     p.settings.enableTranslation = false;
-    p.settings.enableTimeToBeat = false;
     p.settings.enableSteam = false;
     p.settings.steamProfile = '';
     p.settings.steamApiKeySecretName = '';
@@ -214,9 +213,9 @@ async function main() {
   })()`);
   await poll(settings, `${CONTENT} && ${CONTENT}.querySelectorAll('.setting-item').length > 15`, POLL_TIMEOUT_MS, 'settings rows to render');
   await sleep(400);
-  await settings.screenshot(`${process.env.E2E_REPORT_DIR || 'docs/verification/issues-2-4'}/settings-declarative.png`);
+  await settings.screenshot(`${process.env.E2E_REPORT_DIR || 'docs/verification/automatic-time-to-beat'}/settings-declarative.png`);
 
-  // 23 settings rows + 7 group headings.
+  // 22 settings rows + 7 group headings.
   const summary = await settings.evaluate(`(() => {
     const content = ${CONTENT};
     const items = [...content.querySelectorAll('.setting-item')];
@@ -234,9 +233,9 @@ async function main() {
       fileNameSearch,
     };
   })()`);
-  summary.rows === 23 ? pass(`23 settings rows (got ${summary.rows})`) : fail('row count', JSON.stringify(summary));
+  summary.rows === 22 ? pass(`22 settings rows (got ${summary.rows})`) : fail('row count', JSON.stringify(summary));
   summary.headings === 7 ? pass('7 group headings') : fail('heading count', JSON.stringify(summary));
-  summary.toggles === 8 ? pass('8 toggles') : fail('toggle count', JSON.stringify(summary));
+  summary.toggles === 7 ? pass('7 toggles') : fail('toggle count', JSON.stringify(summary));
   summary.selects === 3 ? pass('3 dropdowns') : fail('dropdown count', JSON.stringify(summary));
   summary.passwords === 2 ? pass('2 password inputs (client secret, DeepL key)') : fail('password count', JSON.stringify(summary));
   summary.fileNameHint ? pass('file-name preview hint rendered') : fail('file-name preview hint missing', '');
@@ -275,10 +274,8 @@ async function main() {
   })()`);
   steamState.profileDisabled ? pass('Steam profile disabled by default') : fail('Steam profile initial gate', JSON.stringify(steamState));
   steamState.secretPicker ? pass('Steam key uses native secret picker, not plaintext/password input') : fail('Steam secret picker missing', JSON.stringify(steamState));
-  await settings.evaluate(`${findRow('Fetch time to beat')}.querySelector('.checkbox-container').click()`);
-  await sleep(400);
-  const timeEnabled = await page.evaluate(`app.plugins.plugins['igdb-game-search'].settings.enableTimeToBeat`);
-  timeEnabled ? pass('time-to-beat toggle persists') : fail('time-to-beat toggle', 'not persisted');
+  const noTimeToggle = await settings.evaluate(`${findRow('Fetch time to beat')} === undefined`);
+  noTimeToggle ? pass('time-to-beat has no opt-in control') : fail('obsolete time-to-beat toggle', 'still present');
   await settings.evaluate(`${findRow('Enable Steam integration')}.querySelector('.checkbox-container').click()`);
   await sleep(400);
   const profileEnabled = await settings.evaluate(`${findRow('Steam profile')}.querySelector('input').disabled === false`);
@@ -294,10 +291,10 @@ async function main() {
   profile === 'https://steamcommunity.com/id/e2e-example/' ? pass('Steam profile trimmed and persisted') : fail('Steam profile save', JSON.stringify(profile));
   const stored = await page.evaluate(`(async () => {
     const p=app.plugins.plugins['igdb-game-search']; await p.saveSettings();
-    const data=await p.loadData(); return {enableTimeToBeat:data.enableTimeToBeat,enableSteam:data.enableSteam,
+    const data=await p.loadData(); return {hasLegacyTimeFlag:Object.hasOwn(data,'enableTimeToBeat'),enableSteam:data.enableSteam,
       hasPlainKey:Object.hasOwn(data,'steamApiKey'), secretName:data.steamApiKeySecretName};
   })()`);
-  stored.enableTimeToBeat && stored.enableSteam && !stored.hasPlainKey && stored.secretName === ''
+  !stored.hasLegacyTimeFlag && stored.enableSteam && !stored.hasPlainKey && stored.secretName === ''
     ? pass('data.json stores toggles and secret identifier only') : fail('Steam settings storage', JSON.stringify(stored));
 
   // Toggle "Enable translation": the target dropdown and DeepL key must enable.
@@ -347,7 +344,7 @@ async function main() {
   jaPersisted === 'ja' && ja.hasJapanese
     ? pass('UI language switch persisted and re-rendered in Japanese')
     : fail('UI language re-render', JSON.stringify({ jaPersisted, ...ja }));
-  await settings.screenshot(`${process.env.E2E_REPORT_DIR || 'docs/verification/issues-2-4'}/settings-ja.png`);
+  await settings.screenshot(`${process.env.E2E_REPORT_DIR || 'docs/verification/automatic-time-to-beat'}/settings-ja.png`);
 
   // Switch back to English and restore the default feature state so the
   // standard driver smoke test can run after this probe.
@@ -363,7 +360,6 @@ async function main() {
   await page.evaluate(`(() => {
     const p = app.plugins.plugins['igdb-game-search'];
     p.settings.enableTranslation = false;
-    p.settings.enableTimeToBeat = false;
     p.settings.enableSteam = false;
     p.settings.steamProfile = '';
     p.settings.steamApiKeySecretName = '';

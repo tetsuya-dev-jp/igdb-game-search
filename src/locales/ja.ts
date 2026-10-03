@@ -29,8 +29,6 @@ export const ja: Partial<Record<I18nKey, string>> = {
   'settings.igdb.clientId.desc': 'ゲームメタデータ取得用のアクセストークンを要求するために使用します。',
   'settings.igdb.clientSecret.name': 'Twitch Client Secret',
   'settings.igdb.clientSecret.desc': 'プラグインデータとしてローカルに保存され、アクセストークンの更新に使用されます。',
-  'settings.timeToBeat.name': 'クリア時間を取得',
-  'settings.timeToBeat.desc': '選択したゲームのクリア時間の目安を IGDB から取得します。',
   'settings.steam.header': 'Steam',
   'settings.steam.enable.name': 'Steam 連携を有効にする',
   'settings.steam.enable.desc': '選択したゲームのプレイ時間と実績を取得します。',

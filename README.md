@@ -110,9 +110,9 @@ Enter your Twitch `Client ID` and `Client Secret` in the plugin settings.
 
 The plugin uses these credentials to get an IGDB access token automatically.
 
-### Fetch time to beat
+### Time-to-beat metadata
 
-When enabled, fetches IGDB's time-to-beat estimates for the selected game. IGDB's `hastily` value maps to `main` (credits without notable extras), `normally` to `average` (some extras), and `completely` to `completionist`. Values are converted from seconds to hours with two decimal places. IGDB is the only source: no compliant public HowLongToBeat API is established, so the plugin does not scrape the site or use private-token workarounds. Missing estimates are blank. Complete results, including misses, are cached for one hour; transient failures are not cached.
+Time-to-beat estimates are fetched automatically for the selected game when creating a note or inserting metadata, using the existing IGDB credentials. No toggle or additional API key is required; search results are not individually enriched. The obsolete `enableTimeToBeat` setting is ignored on load and omitted on subsequent saves, including previously saved `false` values. IGDB's `hastily` value maps to `main` (credits without notable extras), `normally` to `average` (some extras), and `completely` to `completionist`. Values are converted from seconds to hours with two decimal places. IGDB is the only source: no compliant public HowLongToBeat API is established, so the plugin does not scrape the site or use private-token workarounds. Missing estimates are blank. Complete results, including misses, are cached for one hour; transient failures are not cached.
 
 ### Steam integration
 
@@ -124,8 +124,6 @@ Every key below is present in English, Japanese, and Korean locale maps.
 
 | Locale key | English UI string |
 | --- | --- |
-| `settings.timeToBeat.name` | Fetch time to beat |
-| `settings.timeToBeat.desc` | Fetch IGDB time-to-beat estimates for the selected game. |
 | `settings.steam.header` | Steam |
 | `settings.steam.enable.name` | Enable Steam integration |
 | `settings.steam.enable.desc` | Fetch playtime and achievements for the selected game. |

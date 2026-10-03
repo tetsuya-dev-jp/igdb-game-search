@@ -1,0 +1,62 @@
+[
+  {
+    "text": "---\nTitle: Resident Evil Requiem\nCover: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual-6.jpg]]\"\nBackdrop: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual/screenshot-01-6.jpg]]\"\nPlatform:\n  - \"Xbox Series X|S\"\n  - \"Nintendo Switch 2\"\n  - \"PC (Microsoft Windows)\"\n  - \"PlayStation 5\"\nDeveloper: Capcom Development Division 1\nPublisher: Capcom\nGenre:\n  - \"Shooter\"\n  - \"Puzzle\"\n  - \"Adventure\"\nReleaseDate: 2026-02-27\nMetacritic: 333\nStoreUrl: https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/\n---\n\n# Resident Evil Requiem\n",
+    "frontmatter": {
+      "Title": "Resident Evil Requiem",
+      "Cover": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual-6.jpg]]",
+      "Backdrop": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-manual/screenshot-01-6.jpg]]",
+      "Platform": [
+        "Xbox Series X|S",
+        "Nintendo Switch 2",
+        "PC (Microsoft Windows)",
+        "PlayStation 5"
+      ],
+      "Developer": "Capcom Development Division 1",
+      "Publisher": "Capcom",
+      "Genre": [
+        "Shooter",
+        "Puzzle",
+        "Adventure"
+      ],
+      "ReleaseDate": "2026-02-27",
+      "Metacritic": 333,
+      "StoreUrl": "https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/"
+    },
+    "executions": 1,
+    "auto": false,
+    "templater": "2.25.1",
+    "note": "Resident Evil Requiem - templater-manual.md",
+    "vault": "/home/tetsuya/dev/igdb-game-search/e2e/.vault",
+    "windowTitle": "Resident Evil Requiem - templater-manual - .vault - Obsidian 1.13.7"
+  },
+  {
+    "text": "---\nTitle: Resident Evil Requiem\nCover: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-6.jpg]]\"\nBackdrop: \"[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-6.jpg]]\"\nPlatform:\n  - \"Xbox Series X|S\"\n  - \"Nintendo Switch 2\"\n  - \"PC (Microsoft Windows)\"\n  - \"PlayStation 5\"\nDeveloper: Capcom Development Division 1\nPublisher: Capcom\nGenre:\n  - \"Shooter\"\n  - \"Puzzle\"\n  - \"Adventure\"\nReleaseDate: 2026-02-27\nMetacritic: 333\nStoreUrl: https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/\n---\n\n# Resident Evil Requiem\n",
+    "frontmatter": {
+      "Title": "Resident Evil Requiem",
+      "Cover": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto-6.jpg]]",
+      "Backdrop": "[[00 - Atlas/Archive/Attachments/09 - The Arcade/Resident Evil Requiem - templater-auto/screenshot-01-6.jpg]]",
+      "Platform": [
+        "Xbox Series X|S",
+        "Nintendo Switch 2",
+        "PC (Microsoft Windows)",
+        "PlayStation 5"
+      ],
+      "Developer": "Capcom Development Division 1",
+      "Publisher": "Capcom",
+      "Genre": [
+        "Shooter",
+        "Puzzle",
+        "Adventure"
+      ],
+      "ReleaseDate": "2026-02-27",
+      "Metacritic": 333,
+      "StoreUrl": "https://store.steampowered.com/app/3764200/Resident_Evil_Requiem/"
+    },
+    "executions": 1,
+    "auto": true,
+    "templater": "2.25.1",
+    "note": "Resident Evil Requiem - templater-auto.md",
+    "vault": "/home/tetsuya/dev/igdb-game-search/e2e/.vault",
+    "windowTitle": "Resident Evil Requiem - templater-auto - .vault - Obsidian 1.13.7"
+  }
+]
