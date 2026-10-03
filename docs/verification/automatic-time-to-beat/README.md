@@ -45,6 +45,10 @@ All cases start from a saved legacy opt-out and require no settings action. The 
 - [Settings without the toggle](settings-declarative.png), [Japanese settings](settings-ja.png).
 - [Real image rendering](desktop-images.png), [structured note](desktop-after.png), [native Templater output](templater-desktop.png).
 
+## Review
+
+Two independent read-only Luna reviews of the frozen candidate reported zero Standards findings and zero material Spec findings. Both confirmed that obsolete UI/schema strings are removed, legacy settings do not suppress fetching, Steam remains opt-in, and the mocked-transport provenance is disclosed.
+
 ## Reproduce
 
 ```bash
